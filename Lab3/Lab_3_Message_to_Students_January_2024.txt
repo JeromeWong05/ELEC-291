@@ -1,0 +1,127 @@
+Dear ELEC291/292 students,
+
+Here are a few hints for lab 3 that could be useful:
+
+1) Do not install PuTTY in a folder that contains spaces.  For example, install PuTTY in C:\PuTTY.  If the installer forces you to install PuTTY into "Program Files", a trick you can use is to use the "short" name of the folder.  The find the short name of "Program Files" we can use the 'dir' command in a CMD terminal:
+
+C:\>dir /x pro*
+ Volume in drive C is OS
+ Volume Serial Number is 3E57-CB6D
+
+ Directory of C:\
+
+2024-02-01  10:14 AM    <DIR>          PROGRA~1     Program Files
+2024-01-23  11:11 AM    <DIR>          PROGRA~2     Program Files (x86)
+2023-10-25  08:40 AM    <DIR>                       Programs
+               0 File(s)              0 bytes
+               3 Dir(s)  727,994,085,376 bytes free
+
+C:\>
+
+So if putty is installed in "Program Files" the folder name I could use is "C:\PROGRA~1\PuTTY\putty.exe"
+
+2) The result of an ADC conversion is stored into 2 bytes.  Since we are performing arithmetic with 32-bits (4 bytes)
+we need to pad the higher bytes of either x or y with zeros.  For example, if the result of an ADC conversion is stored
+in the 2-byte variable 'result':
+
+; Copy the 12-bits of the ADC conversion into the 32-bits of 'x'
+mov x+0, result+0
+mov x+1, result+1
+mov x+2, #0
+mov x+3, #0
+; Multiply by 5.0000, the reference voltage
+load_Y(50000)
+lcall mul32
+; Divide result by 4095
+load_Y(4095)
+lcall div32
+; Subtract 273 from result
+load_Y(27300)
+lcall sub32
+; The 4-bytes of x have the temperature in binary
+.
+.
+.
+
+3) Do not send binary numbers to PuTTY.  PuTTY only understands ASCII. After you read from the ADC and convert to
+temperature you get a binary number.  The first step is to convert the binary number to BCD, and then convert the
+BCD to ASCII.  Then the ACCII codes can be send to the LCD or PuTTY via the serial port.  For example in mathtest.asm
+we have:
+
+Set_Cursor(1, 6);
+Display_BCD(#0x05)
+; Try subtracting 4567 - 1234 = 3333
+Load_x(4567)
+Load_y(1234)
+lcall sub32 ; This subroutine is in math32.asm
+lcall hex2bcd ; converts binary in x to BCD in BCD
+lcall Display_10_digit_BCD
+lcall wait_for_P4_5
+
+If you check Display_10_digit_BCD you'll see how the number is converted to ASCII from BCD:
+
+; Sends 10-digit BCD number in bcd to the LCD
+Display_10_digit_BCD:
+	Set_Cursor(2, 7)
+	Display_BCD(bcd+4)
+	Display_BCD(bcd+3)
+	Display_BCD(bcd+2)
+	Display_BCD(bcd+1)
+	Display_BCD(bcd+0)
+
+Display_BCD is a macro/subroutine combo in LCD_4bit.inc:
+
+;---------------------------------;
+; Display a BCD number in the LCD ;
+;---------------------------------;
+Display_BCD mac
+	push ar0
+	mov r0, %0
+	lcall ?Display_BCD
+	pop ar0
+endmac
+
+?Display_BCD:
+	push acc
+	; Write most significant digit
+	mov a, r0
+	swap a
+	anl a, #0fh
+	orl a, #30h
+	lcall ?WriteData
+	; write least significant digit
+	mov a, r0
+	anl a, #0fh
+	orl a, #30h
+	lcall ?WriteData
+	pop acc
+	ret
+
+We can easily modify it to send to PuTTY instead to print in the LCD:
+
+;---------------------------------;
+; Send a BCD number to PuTTY      ;
+;---------------------------------;
+Send_BCD mac
+	push ar0
+	mov r0, %0
+	lcall ?Send_BCD
+	pop ar0
+endmac
+
+?Send_BCD:
+	push acc
+	; Write most significant digit
+	mov a, r0
+	swap a
+	anl a, #0fh
+	orl a, #30h
+	lcall putchar
+	; write least significant digit
+	mov a, r0
+	anl a, #0fh
+	orl a, #30h
+	lcall putchar
+	pop acc
+	ret
+
