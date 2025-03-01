@@ -1,0 +1,23 @@
+Version 4
+SymbolType BLOCK
+RECTANGLE Normal -64 -56 80 56
+WINDOW 0 8 -56 Bottom 2
+WINDOW 3 8 56 Top 2
+SYMATTR Value LM393
+SYMATTR Prefix X
+SYMATTR ModelFile C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\Lab4\LM393 PSPICE MODEL.LIB
+PIN -64 16 LEFT 8
+PINATTR PinName neg
+PINATTR SpiceOrder 1
+PIN -64 -16 LEFT 8
+PINATTR PinName pos
+PINATTR SpiceOrder 2
+PIN 80 -32 RIGHT 8
+PINATTR PinName +Vcc
+PINATTR SpiceOrder 3
+PIN 80 0 RIGHT 8
+PINATTR PinName -Vcc
+PINATTR SpiceOrder 4
+PIN 80 32 RIGHT 8
+PINATTR PinName Vout
+PINATTR SpiceOrder 5
