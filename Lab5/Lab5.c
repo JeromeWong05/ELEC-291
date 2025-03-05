@@ -18,8 +18,8 @@
 #define ADC_ref         P2_3
 #define Phasor_sig      P1_4
 #define Phasor_ref      P2_6
-#define Buttonleft      P3_1
-#define Buttonright     P2_5
+#define Buttonleft      0x31
+#define Buttonright     0x25
 #define DebugLED        P0_1
 
 // Pins for the LCD
@@ -32,9 +32,11 @@
 #define CHARS_PER_LINE  16
 
 // The measured value of VDD in volts
-#define VDD 3.29
-#define PI_  3.1415926
-unsigned char overflow_count;
+#define VDD 3.302
+xdata unsigned char overflow_count;
+xdata float vpeak[2];
+xdata float phase_diff; 
+xdata float frequency; 
 
 char _c51_external_startup (void)
 {
@@ -107,7 +109,7 @@ char _c51_external_startup (void)
 // Uses Timer3 to delay <us> micro-seconds. 
 void Timer3us(unsigned char us)
 {
-	unsigned char i;               // usec counter
+	xdata unsigned char i;               // usec counter
 	
 	// The input for Timer 3 is selected as SYSCLK by setting T3ML (bit 6) of CKCON0:
 	CKCON0|=0b_0100_0000;
@@ -126,11 +128,23 @@ void Timer3us(unsigned char us)
 
 void waitms (unsigned int ms)
 {
-	unsigned int j;
-	unsigned char k;
+	xdata unsigned int j;
+	xdata unsigned char k;
 	for(j=0; j<ms; j++)
 		for (k=0; k<4; k++) Timer3us(250);
 }
+
+void waitus(unsigned int us) {
+    unsigned int temp = us; // Preserve the original delay
+    while (temp > 255) {
+        Timer3us(255);
+        temp -= 255;
+    }
+    if (temp > 0) {
+        Timer3us((unsigned char)temp);
+    }
+}
+
 
 void TIMER0_Init(void)
 {
@@ -199,7 +213,7 @@ void LCD_4BIT (void)
 void LCDprint(char * string, unsigned char line, unsigned char position, bit clear)
 {
 	int j;
-	unsigned char address; 
+	xdata unsigned char address; 
 	
 	if (line == 1){
 		address = 0x80 + position; 
@@ -215,7 +229,7 @@ void LCDprint(char * string, unsigned char line, unsigned char position, bit cle
 
 bit Read_Pin (unsigned char pin)
 {
-	unsigned char mask, result;
+	xdata unsigned char mask, result;
 	
 	mask=(1<<(pin&0x7));
 	switch(pin/0x10)
@@ -246,6 +260,22 @@ bit ReadButtonDebounced(unsigned char pin)
     }
     return 0; 
 }
+
+void Set_Pin_Input (unsigned char pin)
+{
+	xdata unsigned char mask;
+	
+	mask=(1<<(pin&0x7));
+	mask=~mask;
+	switch(pin/0x10)
+	{
+		case 0: P0MDOUT &= mask; break;
+		case 1: P1MDOUT &= mask; break;
+		case 2: P2MDOUT &= mask; break; 
+		case 3: P3MDOUT &= mask; break; 
+	}	
+}
+
 // copied from previous lab - end
 
 void InitADC (void)
@@ -289,7 +319,7 @@ void InitADC (void)
 
 void InitPinADC (unsigned char portno, unsigned char pinno)
 {
-	unsigned char mask;
+	xdata unsigned char mask;
 	
 	mask=1<<pinno;
 
@@ -314,7 +344,7 @@ void InitPinADC (unsigned char portno, unsigned char pinno)
 	SFRPAGE = 0x00;
 }
 
-unsigned int ADC_at_Pin(unsigned char pin)
+xdata unsigned int ADC_at_Pin(unsigned char pin)
 {
 	ADC0MX = pin;   // Select input from pin
 	ADINT = 0;
@@ -323,7 +353,7 @@ unsigned int ADC_at_Pin(unsigned char pin)
 	return (ADC0);
 }
 
-float Volts_at_Pin(unsigned char pin)
+float Volts_at_Pin(unsigned char pin) 
 {
 	 return ((ADC_at_Pin(pin)*VDD)/0b_0011_1111_1111_1111);
 }
@@ -365,21 +395,25 @@ float ReadPeriod(void)
 
 void ReadPeak(float period, float *vpeak)
 {
-    float periodms = period/4.0 * 1000.0; // Period/4 in ms
+    float temp = period * 1e6 / 4; // Period/4 in us
+	int delay_us = (int) temp; 
+	// int delay_ms = period * 10e3 / 4;
 
     // measure reference 
     while(Phasor_ref == 1);
     while(Phasor_ref == 0); 
-    waitms(periodms);
+    // Timer3us(delay_us);
+	// waitms(2);
+	waitus(delay_us);
     vpeak[0] = Volts_at_Pin(QFP32_MUX_P2_3);
-
+	
+	while(Phasor_sig == 1);
+	while(Phasor_sig == 0);
     // measure signal 
-    while(Phasor_sig == 1);
-    while(Phasor_sig == 0); 
-    waitms(periodms);
+    waitus(delay_us);
     vpeak[1] = Volts_at_Pin(QFP32_MUX_P1_5); 
 
-    return; 
+	// printf("V[0]=%.4f, V[1]=%.4f   \r", vpeak[0], vpeak[1]);
 }
 
 float ReadDiff(void){
@@ -416,25 +450,69 @@ float ReadDiff(void){
     
 }
 
+void DisplayMenu(int menu, int units)
+{
+    xdata char buff[17];
+
+    switch(menu)
+    {
+        case 0:
+            if (units) // display peak
+            {
+                sprintf(buff, "Vr=%.1fV", vpeak[0]);
+                LCDprint(buff, 1, 0, 1);
+                sprintf(buff, "Vs=%.1fV", vpeak[1]);
+                LCDprint(buff, 2, 0, 1);
+                // LCDprint("peak", 1, 0, 1);
+                break; 
+
+            }
+            else // display rms 
+            {
+                sprintf(buff, "%.1f",phase_diff);
+                LCDprint(buff, 2, 0, 1);
+                // sprintf(buff2, "f=%.1f", frequency/1000.0);
+                // LCDprint(buff2, 2, 0, 1);
+                // LCDprint("rms", 1, 0, 1);
+                break; 
+            }
+        
+        case 1: // main menu 
+            LCDprint("Phasor", 1, 4, 1);
+            LCDprint("<    Meter     >", 2, 0, 1);
+            break;
+        case 2: 
+            LCDprint("2", 1, 0, 1);
+            // sprintf(buff, "f=%.1f", frequency/1000.0);
+            // LCDprint(buff, 2, 0, 1);
+            break; 
+
+    }
+}
+
 void main (void)
 {
     //initialize variables 
-    float vpeak[2];
-    float v_rms[2];
+    xdata float v_rms[2];
+    xdata int units = 0; 
 
-    float period; 
-    float time_diff; 
-    float phase_diff; 
-    float frequency; 
+    xdata float period; 
+    xdata float time_diff; 
+
+    xdata int menu = 1; 
     
     TIMER0_Init();
 	LCD_4BIT(); 
-	InitPinADC(1, 5); // Configure P1.5 as analog input - signal 
-	InitPinADC(2, 3); // Configure P2.3 as analog input - reference
+	// InitPinADC(1, 5); // Configure P1.5 as analog input - signal 
+	// InitPinADC(2, 3); // Configure P2.3 as analog input - reference
+    InitPinADC(2,1);
+    InitPinADC(2,2);
     InitADC();
+    Set_Pin_Input(0x31);
+    Set_Pin_Input(0X25);
     waitms(500); // Give PuTTy a chance to start before sending
 	printf("\x1b[2J"); // Clear screen using ANSI escape sequence.
-	
+
 	printf ("Phasor Meausrement\n"
             "Test signal: P1.5 and Reference signal: P2.3\n"
 	        "File: %s\n"
@@ -449,12 +527,31 @@ void main (void)
         
         v_rms[0] = vpeak[0] / sqrtf(2); 
         v_rms[1] = vpeak[1] / sqrtf(2); 
-        phase_diff = time_diff * 360.0 / period; 
+        if (time_diff > (period / 2.0))
+        {
+            time_diff -= period; 
+        }
+        phase_diff = time_diff * -360.0 / period; 
         frequency = 1.0/ period;
 
-        printf("Vp_ref = %.3fV, Vp_sig = %.3fV, Phase Diff = %.3fdeg, f = %.3fHz\r", v_rms[0], v_rms[1], phase_diff, frequency);
-		waitms(500);
+        if (ReadButtonDebounced(Buttonleft)){
+            if (menu == 1) menu = 0; 
+            else if (menu == 2) menu = 1; 
+            else if (menu == 0) units = ~units; 
+            WriteCommand(0x01);
+            waitms(5);
+        }
+        
+        else if (ReadButtonDebounced(Buttonright)){
+            if (menu == 0) menu = 1; 
+            else if (menu == 1) menu = 2; 
+            WriteCommand(0x01);
+            waitms(5);
+        }
+        DisplayMenu(menu, units);
+
+        printf("Vp_ref = %.3fV, Vp_sig = %.3fV, Phase Diff = %.3fdeg, f = %.3fHz, T = %.3fs\r", vpeak[0], vpeak[1], phase_diff, frequency, period);        
+        waitms(500);
         
 	}  
 }	
-

@@ -1,7 +1,7 @@
 ;--------------------------------------------------------
 ; File Created by C51
 ; Version 1.0.0 #1170 (Feb 16 2022) (MSVC)
-; This file was generated Mon Mar 03 18:37:07 2025
+; This file was generated Tue Mar 04 16:52:04 2025
 ;--------------------------------------------------------
 $name Lab5
 $optc51 --model-small
@@ -26,6 +26,7 @@ $printf_float
 ;--------------------------------------------------------
 	public _InitPinADC_PARM_2
 	public _main
+	public _DisplayMenu
 	public _ReadDiff
 	public _ReadPeak
 	public _ReadPeriod
@@ -33,6 +34,7 @@ $printf_float
 	public _ADC_at_Pin
 	public _InitPinADC
 	public _InitADC
+	public _Set_Pin_Input
 	public _ReadButtonDebounced
 	public _Read_Pin
 	public _LCDprint
@@ -42,14 +44,19 @@ $printf_float
 	public _LCD_byte
 	public _LCD_pulse
 	public _TIMER0_Init
+	public _waitus
 	public _waitms
 	public _Timer3us
 	public __c51_external_startup
+	public _frequency
+	public _phase_diff
+	public _vpeak
+	public _overflow_count
 	public _LCDprint_PARM_4
+	public _DisplayMenu_PARM_2
 	public _ReadPeak_PARM_2
 	public _LCDprint_PARM_3
 	public _LCDprint_PARM_2
-	public _overflow_count
 ;--------------------------------------------------------
 ; Special Function Registers
 ;--------------------------------------------------------
@@ -498,31 +505,24 @@ _TFRQ           BIT 0xdf
 ; internal ram data
 ;--------------------------------------------------------
 	rseg R_DSEG
-_overflow_count:
-	ds 1
 _LCDprint_PARM_2:
 	ds 1
 _LCDprint_PARM_3:
 	ds 1
 _ReadPeak_PARM_2:
 	ds 3
-_ReadPeak_sloc0_1_0:
+_ReadPeak_delay_us_1_118:
 	ds 2
-_main_vpeak_1_119:
-	ds 8
-_main_v_rms_1_119:
-	ds 8
-_main_period_1_119:
-	ds 4
-_main_time_diff_1_119:
-	ds 4
-_main_phase_diff_1_119:
-	ds 4
+_DisplayMenu_PARM_2:
+	ds 2
 _main_sloc0_1_0:
+	ds 4
+_main_sloc1_1_0:
 	ds 4
 ;--------------------------------------------------------
 ; overlayable items in internal ram 
 ;--------------------------------------------------------
+	rseg	R_OSEG
 	rseg	R_OSEG
 	rseg	R_OSEG
 	rseg	R_OSEG
@@ -543,6 +543,8 @@ _InitPinADC_PARM_2:
 	rseg R_BSEG
 _LCDprint_PARM_4:
 	DBIT	1
+_Read_Pin_sloc0_1_0:
+	DBIT	1
 ;--------------------------------------------------------
 ; paged external ram data
 ;--------------------------------------------------------
@@ -551,6 +553,28 @@ _LCDprint_PARM_4:
 ; external ram data
 ;--------------------------------------------------------
 	rseg R_XSEG
+_overflow_count:
+	ds 1
+_vpeak:
+	ds 8
+_phase_diff:
+	ds 4
+_frequency:
+	ds 4
+_LCDprint_address_1_88:
+	ds 1
+_Read_Pin_result_1_92:
+	ds 1
+_DisplayMenu_buff_1_126:
+	ds 17
+_main_v_rms_1_131:
+	ds 8
+_main_units_1_131:
+	ds 2
+_main_time_diff_1_131:
+	ds 4
+_main_menu_1_131:
+	ds 2
 ;--------------------------------------------------------
 ; absolute external ram data
 ;--------------------------------------------------------
@@ -586,126 +610,126 @@ _LCDprint_PARM_4:
 ;Allocation info for local variables in function '_c51_external_startup'
 ;------------------------------------------------------------
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:39: char _c51_external_startup (void)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:41: char _c51_external_startup (void)
 ;	-----------------------------------------
 ;	 function _c51_external_startup
 ;	-----------------------------------------
 __c51_external_startup:
 	using	0
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:42: SFRPAGE = 0x00;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:44: SFRPAGE = 0x00;
 	mov	_SFRPAGE,#0x00
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:43: WDTCN = 0xDE; //First key
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:45: WDTCN = 0xDE; //First key
 	mov	_WDTCN,#0xDE
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:44: WDTCN = 0xAD; //Second key
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:46: WDTCN = 0xAD; //Second key
 	mov	_WDTCN,#0xAD
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:46: VDM0CN=0x80;       // enable VDD monitor
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:48: VDM0CN=0x80;       // enable VDD monitor
 	mov	_VDM0CN,#0x80
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:47: RSTSRC=0x02|0x04;  // Enable reset on missing clock detector and VDD
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:49: RSTSRC=0x02|0x04;  // Enable reset on missing clock detector and VDD
 	mov	_RSTSRC,#0x06
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:54: SFRPAGE = 0x10;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:56: SFRPAGE = 0x10;
 	mov	_SFRPAGE,#0x10
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:55: PFE0CN  = 0x20; // SYSCLK < 75 MHz.
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:57: PFE0CN  = 0x20; // SYSCLK < 75 MHz.
 	mov	_PFE0CN,#0x20
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:56: SFRPAGE = 0x00;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:58: SFRPAGE = 0x00;
 	mov	_SFRPAGE,#0x00
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:77: CLKSEL = 0x00;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:79: CLKSEL = 0x00;
 	mov	_CLKSEL,#0x00
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:78: CLKSEL = 0x00;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:80: CLKSEL = 0x00;
 	mov	_CLKSEL,#0x00
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:79: while ((CLKSEL & 0x80) == 0);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:81: while ((CLKSEL & 0x80) == 0);
 L002001?:
 	mov	a,_CLKSEL
 	jnb	acc.7,L002001?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:80: CLKSEL = 0x03;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:82: CLKSEL = 0x03;
 	mov	_CLKSEL,#0x03
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:81: CLKSEL = 0x03;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:83: CLKSEL = 0x03;
 	mov	_CLKSEL,#0x03
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:82: while ((CLKSEL & 0x80) == 0);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:84: while ((CLKSEL & 0x80) == 0);
 L002004?:
 	mov	a,_CLKSEL
 	jnb	acc.7,L002004?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:87: P0MDOUT |= 0x10; // Enable UART0 TX as push-pull output
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:89: P0MDOUT |= 0x10; // Enable UART0 TX as push-pull output
 	orl	_P0MDOUT,#0x10
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:88: XBR0     = 0x01; // Enable UART0 on P0.4(TX) and P0.5(RX)                     
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:90: XBR0     = 0x01; // Enable UART0 on P0.4(TX) and P0.5(RX)                     
 	mov	_XBR0,#0x01
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:89: XBR1     = 0X00;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:91: XBR1     = 0X00;
 	mov	_XBR1,#0x00
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:90: XBR2     = 0x40; // Enable crossbar and weak pull-ups
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:92: XBR2     = 0x40; // Enable crossbar and weak pull-ups
 	mov	_XBR2,#0x40
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:96: SCON0 = 0x10;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:98: SCON0 = 0x10;
 	mov	_SCON0,#0x10
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:97: TH1 = 0x100-((SYSCLK/BAUDRATE)/(2L*12L));
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:99: TH1 = 0x100-((SYSCLK/BAUDRATE)/(2L*12L));
 	mov	_TH1,#0xE6
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:98: TL1 = TH1;      // Init Timer1
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:100: TL1 = TH1;      // Init Timer1
 	mov	_TL1,_TH1
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:99: TMOD &= ~0xf0;  // TMOD: timer 1 in 8-bit auto-reload
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:101: TMOD &= ~0xf0;  // TMOD: timer 1 in 8-bit auto-reload
 	anl	_TMOD,#0x0F
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:100: TMOD |=  0x20;                       
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:102: TMOD |=  0x20;                       
 	orl	_TMOD,#0x20
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:101: TR1 = 1; // START Timer1
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:103: TR1 = 1; // START Timer1
 	setb	_TR1
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:102: TI = 1;  // Indicate TX0 ready
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:104: TI = 1;  // Indicate TX0 ready
 	setb	_TI
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:104: return 0;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:106: return 0;
 	mov	dpl,#0x00
 	ret
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'Timer3us'
 ;------------------------------------------------------------
+;i                         Allocated with name '_Timer3us_i_1_67'
 ;us                        Allocated to registers r2 
-;i                         Allocated to registers r3 
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:108: void Timer3us(unsigned char us)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:110: void Timer3us(unsigned char us)
 ;	-----------------------------------------
 ;	 function Timer3us
 ;	-----------------------------------------
 _Timer3us:
 	mov	r2,dpl
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:113: CKCON0|=0b_0100_0000;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:115: CKCON0|=0b_0100_0000;
 	orl	_CKCON0,#0x40
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:115: TMR3RL = (-(SYSCLK)/1000000L); // Set Timer3 to overflow in 1us.
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:117: TMR3RL = (-(SYSCLK)/1000000L); // Set Timer3 to overflow in 1us.
 	mov	_TMR3RL,#0xB8
 	mov	(_TMR3RL >> 8),#0xFF
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:116: TMR3 = TMR3RL;                 // Initialize Timer3 for first overflow
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:118: TMR3 = TMR3RL;                 // Initialize Timer3 for first overflow
 	mov	_TMR3,_TMR3RL
 	mov	(_TMR3 >> 8),(_TMR3RL >> 8)
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:118: TMR3CN0 = 0x04;                 // Sart Timer3 and clear overflow flag
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:120: TMR3CN0 = 0x04;                 // Sart Timer3 and clear overflow flag
 	mov	_TMR3CN0,#0x04
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:119: for (i = 0; i < us; i++)       // Count <us> overflows
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:121: for (i = 0; i < us; i++)       // Count <us> overflows
 	mov	r3,#0x00
 L003004?:
 	clr	c
 	mov	a,r3
 	subb	a,r2
 	jnc	L003007?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:121: while (!(TMR3CN0 & 0x80));  // Wait for overflow
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:123: while (!(TMR3CN0 & 0x80));  // Wait for overflow
 L003001?:
 	mov	a,_TMR3CN0
 	jnb	acc.7,L003001?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:122: TMR3CN0 &= ~(0x80);         // Clear overflow indicator
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:124: TMR3CN0 &= ~(0x80);         // Clear overflow indicator
 	anl	_TMR3CN0,#0x7F
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:119: for (i = 0; i < us; i++)       // Count <us> overflows
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:121: for (i = 0; i < us; i++)       // Count <us> overflows
 	inc	r3
 	sjmp	L003004?
 L003007?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:124: TMR3CN0 = 0 ;                   // Stop Timer3 and clear overflow flag
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:126: TMR3CN0 = 0 ;                   // Stop Timer3 and clear overflow flag
 	mov	_TMR3CN0,#0x00
 	ret
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'waitms'
 ;------------------------------------------------------------
 ;ms                        Allocated to registers r2 r3 
-;j                         Allocated to registers r4 r5 
-;k                         Allocated to registers r6 
+;j                         Allocated with name '_waitms_j_1_70'
+;k                         Allocated with name '_waitms_k_1_70'
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:127: void waitms (unsigned int ms)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:129: void waitms (unsigned int ms)
 ;	-----------------------------------------
 ;	 function waitms
 ;	-----------------------------------------
 _waitms:
 	mov	r2,dpl
 	mov	r3,dph
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:131: for(j=0; j<ms; j++)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:133: for(j=0; j<ms; j++)
 	mov	r4,#0x00
 	mov	r5,#0x00
 L004005?:
@@ -715,7 +739,7 @@ L004005?:
 	mov	a,r5
 	subb	a,r3
 	jnc	L004009?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:132: for (k=0; k<4; k++) Timer3us(250);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:134: for (k=0; k<4; k++) Timer3us(250);
 	mov	r6,#0x00
 L004001?:
 	cjne	r6,#0x04,L004018?
@@ -736,7 +760,7 @@ L004018?:
 	inc	r6
 	sjmp	L004001?
 L004007?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:131: for(j=0; j<ms; j++)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:133: for(j=0; j<ms; j++)
 	inc	r4
 	cjne	r4,#0x00,L004005?
 	inc	r5
@@ -744,36 +768,82 @@ L004007?:
 L004009?:
 	ret
 ;------------------------------------------------------------
+;Allocation info for local variables in function 'waitus'
+;------------------------------------------------------------
+;us                        Allocated to registers r2 r3 
+;temp                      Allocated to registers r2 r3 
+;------------------------------------------------------------
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:137: void waitus(unsigned int us) {
+;	-----------------------------------------
+;	 function waitus
+;	-----------------------------------------
+_waitus:
+	mov	r2,dpl
+	mov	r3,dph
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:139: while (temp > 255) {
+L005001?:
+	clr	c
+	mov	a,#0xFF
+	subb	a,r2
+	clr	a
+	subb	a,r3
+	jnc	L005003?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:140: Timer3us(255);
+	mov	dpl,#0xFF
+	push	ar2
+	push	ar3
+	lcall	_Timer3us
+	pop	ar3
+	pop	ar2
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:141: temp -= 255;
+	mov	a,r2
+	add	a,#0x01
+	mov	r2,a
+	mov	a,r3
+	addc	a,#0xff
+	mov	r3,a
+	sjmp	L005001?
+L005003?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:143: if (temp > 0) {
+	mov	a,r2
+	orl	a,r3
+	jz	L005006?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:144: Timer3us((unsigned char)temp);
+	mov	dpl,r2
+	ljmp	_Timer3us
+L005006?:
+	ret
+;------------------------------------------------------------
 ;Allocation info for local variables in function 'TIMER0_Init'
 ;------------------------------------------------------------
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:135: void TIMER0_Init(void)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:149: void TIMER0_Init(void)
 ;	-----------------------------------------
 ;	 function TIMER0_Init
 ;	-----------------------------------------
 _TIMER0_Init:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:137: TMOD&=0b_1111_0000; // Set the bits of Timer/Counter 0 to zero
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:151: TMOD&=0b_1111_0000; // Set the bits of Timer/Counter 0 to zero
 	anl	_TMOD,#0xF0
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:138: TMOD|=0b_0000_0001; // Timer/Counter 0 used as a 16-bit timer
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:152: TMOD|=0b_0000_0001; // Timer/Counter 0 used as a 16-bit timer
 	orl	_TMOD,#0x01
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:139: TR0=0; // Stop Timer/Counter 0
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:153: TR0=0; // Stop Timer/Counter 0
 	clr	_TR0
 	ret
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'LCD_pulse'
 ;------------------------------------------------------------
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:143: void LCD_pulse (void)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:157: void LCD_pulse (void)
 ;	-----------------------------------------
 ;	 function LCD_pulse
 ;	-----------------------------------------
 _LCD_pulse:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:145: LCD_E=1;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:159: LCD_E=1;
 	setb	_P2_0
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:146: Timer3us(40);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:160: Timer3us(40);
 	mov	dpl,#0x28
 	lcall	_Timer3us
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:147: LCD_E=0;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:161: LCD_E=0;
 	clr	_P2_0
 	ret
 ;------------------------------------------------------------
@@ -781,66 +851,66 @@ _LCD_pulse:
 ;------------------------------------------------------------
 ;x                         Allocated to registers r2 
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:150: void LCD_byte (unsigned char x)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:164: void LCD_byte (unsigned char x)
 ;	-----------------------------------------
 ;	 function LCD_byte
 ;	-----------------------------------------
 _LCD_byte:
 	mov	r2,dpl
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:153: ACC=x; //Send high nible
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:167: ACC=x; //Send high nible
 	mov	_ACC,r2
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:154: LCD_D7=ACC_7;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:168: LCD_D7=ACC_7;
 	mov	c,_ACC_7
 	mov	_P1_0,c
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:155: LCD_D6=ACC_6;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:169: LCD_D6=ACC_6;
 	mov	c,_ACC_6
 	mov	_P1_1,c
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:156: LCD_D5=ACC_5;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:170: LCD_D5=ACC_5;
 	mov	c,_ACC_5
 	mov	_P1_2,c
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:157: LCD_D4=ACC_4;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:171: LCD_D4=ACC_4;
 	mov	c,_ACC_4
 	mov	_P1_3,c
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:158: LCD_pulse();
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:172: LCD_pulse();
 	push	ar2
 	lcall	_LCD_pulse
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:159: Timer3us(40);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:173: Timer3us(40);
 	mov	dpl,#0x28
 	lcall	_Timer3us
 	pop	ar2
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:160: ACC=x; //Send low nible
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:174: ACC=x; //Send low nible
 	mov	_ACC,r2
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:161: LCD_D7=ACC_3;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:175: LCD_D7=ACC_3;
 	mov	c,_ACC_3
 	mov	_P1_0,c
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:162: LCD_D6=ACC_2;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:176: LCD_D6=ACC_2;
 	mov	c,_ACC_2
 	mov	_P1_1,c
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:163: LCD_D5=ACC_1;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:177: LCD_D5=ACC_1;
 	mov	c,_ACC_1
 	mov	_P1_2,c
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:164: LCD_D4=ACC_0;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:178: LCD_D4=ACC_0;
 	mov	c,_ACC_0
 	mov	_P1_3,c
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:165: LCD_pulse();
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:179: LCD_pulse();
 	ljmp	_LCD_pulse
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'WriteData'
 ;------------------------------------------------------------
 ;x                         Allocated to registers r2 
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:168: void WriteData (unsigned char x)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:182: void WriteData (unsigned char x)
 ;	-----------------------------------------
 ;	 function WriteData
 ;	-----------------------------------------
 _WriteData:
 	mov	r2,dpl
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:170: LCD_RS=1;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:184: LCD_RS=1;
 	setb	_P1_7
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:171: LCD_byte(x);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:185: LCD_byte(x);
 	mov	dpl,r2
 	lcall	_LCD_byte
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:172: waitms(2);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:186: waitms(2);
 	mov	dptr,#0x0002
 	ljmp	_waitms
 ;------------------------------------------------------------
@@ -848,53 +918,53 @@ _WriteData:
 ;------------------------------------------------------------
 ;x                         Allocated to registers r2 
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:175: void WriteCommand (unsigned char x)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:189: void WriteCommand (unsigned char x)
 ;	-----------------------------------------
 ;	 function WriteCommand
 ;	-----------------------------------------
 _WriteCommand:
 	mov	r2,dpl
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:177: LCD_RS=0;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:191: LCD_RS=0;
 	clr	_P1_7
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:178: LCD_byte(x);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:192: LCD_byte(x);
 	mov	dpl,r2
 	lcall	_LCD_byte
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:179: waitms(5);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:193: waitms(5);
 	mov	dptr,#0x0005
 	ljmp	_waitms
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'LCD_4BIT'
 ;------------------------------------------------------------
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:182: void LCD_4BIT (void)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:196: void LCD_4BIT (void)
 ;	-----------------------------------------
 ;	 function LCD_4BIT
 ;	-----------------------------------------
 _LCD_4BIT:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:184: LCD_E=0; // Resting state of LCD's enable is zero
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:198: LCD_E=0; // Resting state of LCD's enable is zero
 	clr	_P2_0
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:186: waitms(20);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:200: waitms(20);
 	mov	dptr,#0x0014
 	lcall	_waitms
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:188: WriteCommand(0x33);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:202: WriteCommand(0x33);
 	mov	dpl,#0x33
 	lcall	_WriteCommand
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:189: WriteCommand(0x33);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:203: WriteCommand(0x33);
 	mov	dpl,#0x33
 	lcall	_WriteCommand
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:190: WriteCommand(0x32); // Change to 4-bit mode
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:204: WriteCommand(0x32); // Change to 4-bit mode
 	mov	dpl,#0x32
 	lcall	_WriteCommand
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:193: WriteCommand(0x28);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:207: WriteCommand(0x28);
 	mov	dpl,#0x28
 	lcall	_WriteCommand
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:194: WriteCommand(0x0c);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:208: WriteCommand(0x0c);
 	mov	dpl,#0x0C
 	lcall	_WriteCommand
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:195: WriteCommand(0x01); // Clear screen command (takes some time)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:209: WriteCommand(0x01); // Clear screen command (takes some time)
 	mov	dpl,#0x01
 	lcall	_WriteCommand
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:196: waitms(20); // Wait for clear screen command to finsih.
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:210: waitms(20); // Wait for clear screen command to finsih.
 	mov	dptr,#0x0014
 	ljmp	_waitms
 ;------------------------------------------------------------
@@ -904,9 +974,9 @@ _LCD_4BIT:
 ;position                  Allocated with name '_LCDprint_PARM_3'
 ;string                    Allocated to registers r2 r3 r4 
 ;j                         Allocated to registers r5 r6 
-;address                   Allocated to registers r5 
+;address                   Allocated with name '_LCDprint_address_1_88'
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:199: void LCDprint(char * string, unsigned char line, unsigned char position, bit clear)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:213: void LCDprint(char * string, unsigned char line, unsigned char position, bit clear)
 ;	-----------------------------------------
 ;	 function LCDprint
 ;	-----------------------------------------
@@ -914,36 +984,40 @@ _LCDprint:
 	mov	r2,dpl
 	mov	r3,dph
 	mov	r4,b
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:204: if (line == 1){
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:218: if (line == 1){
 	mov	a,#0x01
-	cjne	a,_LCDprint_PARM_2,L011002?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:205: address = 0x80 + position; 
+	cjne	a,_LCDprint_PARM_2,L012002?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:219: address = 0x80 + position; 
+	mov	dptr,#_LCDprint_address_1_88
 	mov	a,#0x80
 	add	a,_LCDprint_PARM_3
-	mov	r5,a
-	sjmp	L011003?
-L011002?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:208: address = 0xC0 + position; 
+	movx	@dptr,a
+	sjmp	L012003?
+L012002?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:222: address = 0xC0 + position; 
+	mov	dptr,#_LCDprint_address_1_88
 	mov	a,#0xC0
 	add	a,_LCDprint_PARM_3
-	mov	r5,a
-L011003?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:210: WriteCommand(address);
-	mov	dpl,r5
+	movx	@dptr,a
+L012003?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:224: WriteCommand(address);
+	mov	dptr,#_LCDprint_address_1_88
+	movx	a,@dptr
+	mov	dpl,a
 	push	ar2
 	push	ar3
 	push	ar4
 	lcall	_WriteCommand
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:211: waitms(5);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:225: waitms(5);
 	mov	dptr,#0x0005
 	lcall	_waitms
 	pop	ar4
 	pop	ar3
 	pop	ar2
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:212: for(j=0; string[j]!=0; j++)	WriteData(string[j]);// Write the message
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:226: for(j=0; string[j]!=0; j++)	WriteData(string[j]);// Write the message
 	mov	r5,#0x00
 	mov	r6,#0x00
-L011006?:
+L012006?:
 	mov	a,r5
 	add	a,r2
 	mov	r7,a
@@ -956,7 +1030,7 @@ L011006?:
 	mov	b,r1
 	lcall	__gptrget
 	mov	r7,a
-	jz	L011009?
+	jz	L012009?
 	mov	dpl,r7
 	push	ar2
 	push	ar3
@@ -970,22 +1044,22 @@ L011006?:
 	pop	ar3
 	pop	ar2
 	inc	r5
-	cjne	r5,#0x00,L011006?
+	cjne	r5,#0x00,L012006?
 	inc	r6
-	sjmp	L011006?
-L011009?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:213: if(clear) for(; j<CHARS_PER_LINE; j++) WriteData(' '); // Clear the rest of the line
-	jnb	_LCDprint_PARM_4,L011014?
+	sjmp	L012006?
+L012009?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:227: if(clear) for(; j<CHARS_PER_LINE; j++) WriteData(' '); // Clear the rest of the line
+	jnb	_LCDprint_PARM_4,L012014?
 	mov	ar2,r5
 	mov	ar3,r6
-L011010?:
+L012010?:
 	clr	c
 	mov	a,r2
 	subb	a,#0x10
 	mov	a,r3
 	xrl	a,#0x80
 	subb	a,#0x80
-	jnc	L011014?
+	jnc	L012014?
 	mov	dpl,#0x20
 	push	ar2
 	push	ar3
@@ -993,230 +1067,301 @@ L011010?:
 	pop	ar3
 	pop	ar2
 	inc	r2
-	cjne	r2,#0x00,L011010?
+	cjne	r2,#0x00,L012010?
 	inc	r3
-	sjmp	L011010?
-L011014?:
+	sjmp	L012010?
+L012014?:
 	ret
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'Read_Pin'
 ;------------------------------------------------------------
+;mask                      Allocated with name '_Read_Pin_mask_1_92'
+;result                    Allocated with name '_Read_Pin_result_1_92'
 ;pin                       Allocated to registers r2 
-;mask                      Allocated to registers r3 
-;result                    Allocated to registers r2 
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:216: bit Read_Pin (unsigned char pin)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:230: bit Read_Pin (unsigned char pin)
 ;	-----------------------------------------
 ;	 function Read_Pin
 ;	-----------------------------------------
 _Read_Pin:
 	mov	r2,dpl
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:220: mask=(1<<(pin&0x7));
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:234: mask=(1<<(pin&0x7));
 	mov	a,#0x07
 	anl	a,r2
 	mov	b,a
 	inc	b
 	mov	a,#0x01
-	sjmp	L012012?
-L012010?:
+	sjmp	L013012?
+L013010?:
 	add	a,acc
-L012012?:
-	djnz	b,L012010?
+L013012?:
+	djnz	b,L013010?
 	mov	r3,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:221: switch(pin/0x10)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:235: switch(pin/0x10)
 	mov	a,r2
 	swap	a
 	anl	a,#0x0f
 	mov  r2,a
 	add	a,#0xff - 0x03
-	jc	L012002?
+	jc	L013002?
 	mov	a,r2
 	add	a,r2
 	add	a,r2
-	mov	dptr,#L012014?
+	mov	dptr,#L013014?
 	jmp	@a+dptr
-L012014?:
-	ljmp	L012002?
-	ljmp	L012003?
-	ljmp	L012004?
-	ljmp	L012005?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:224: case 0: result = P0 & mask; break;
-L012002?:
+L013014?:
+	ljmp	L013002?
+	ljmp	L013003?
+	ljmp	L013004?
+	ljmp	L013005?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:238: case 0: result = P0 & mask; break;
+L013002?:
+	mov	dptr,#_Read_Pin_result_1_92
 	mov	a,r3
 	anl	a,_P0
-	mov	r2,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:225: case 1: result = P1 & mask; break;
-	sjmp	L012006?
-L012003?:
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:239: case 1: result = P1 & mask; break;
+	sjmp	L013006?
+L013003?:
+	mov	dptr,#_Read_Pin_result_1_92
 	mov	a,r3
 	anl	a,_P1
-	mov	r2,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:226: case 2: result = P2 & mask; break; 
-	sjmp	L012006?
-L012004?:
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:240: case 2: result = P2 & mask; break; 
+	sjmp	L013006?
+L013004?:
+	mov	dptr,#_Read_Pin_result_1_92
 	mov	a,r3
 	anl	a,_P2
-	mov	r2,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:227: case 3: result = P3 & mask; break; 
-	sjmp	L012006?
-L012005?:
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:241: case 3: result = P3 & mask; break; 
+	sjmp	L013006?
+L013005?:
+	mov	dptr,#_Read_Pin_result_1_92
 	mov	a,r3
 	anl	a,_P3
-	mov	r2,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:228: }
-L012006?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:229: return (result?1:0);
-	mov	a,r2
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:242: }
+L013006?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:243: return (result?1:0);
+	mov	dptr,#_Read_Pin_result_1_92
+	movx	a,@dptr
 	add	a,#0xff
+	mov  _Read_Pin_sloc0_1_0,c
 	ret
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'ReadButtonDebounced'
 ;------------------------------------------------------------
 ;pin                       Allocated to registers r2 
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:232: bit ReadButtonDebounced(unsigned char pin)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:246: bit ReadButtonDebounced(unsigned char pin)
 ;	-----------------------------------------
 ;	 function ReadButtonDebounced
 ;	-----------------------------------------
 _ReadButtonDebounced:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:234: if (Read_Pin(pin) == 0) 
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:248: if (Read_Pin(pin) == 0) 
 	mov  r2,dpl
 	push	ar2
 	lcall	_Read_Pin
 	pop	ar2
-	jc	L013007?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:236: waitms(10);
+	jc	L014007?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:250: waitms(10);
 	mov	dptr,#0x000A
 	push	ar2
 	lcall	_waitms
 	pop	ar2
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:237: while (Read_Pin(pin) == 0) // check again
-L013001?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:251: while (Read_Pin(pin) == 0) // check again
+L014001?:
 	mov	dpl,r2
 	push	ar2
 	lcall	_Read_Pin
 	clr	a
 	rlc	a
 	pop	ar2
-	jz	L013001?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:241: waitms(10); 
+	jz	L014001?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:255: waitms(10); 
 	mov	dptr,#0x000A
 	push	ar2
 	lcall	_waitms
 	pop	ar2
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:242: if (Read_Pin(pin) == 1){
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:256: if (Read_Pin(pin) == 1){
 	mov	dpl,r2
 	lcall	_Read_Pin
 	clr	a
 	rlc	a
 	mov	r2,a
-	cjne	r2,#0x01,L013007?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:243: return 1;
+	cjne	r2,#0x01,L014007?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:257: return 1;
 	setb	c
 	ret
-L013007?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:247: return 0; 
+L014007?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:261: return 0; 
 	clr	c
+	ret
+;------------------------------------------------------------
+;Allocation info for local variables in function 'Set_Pin_Input'
+;------------------------------------------------------------
+;mask                      Allocated with name '_Set_Pin_Input_mask_1_100'
+;pin                       Allocated to registers r2 
+;------------------------------------------------------------
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:264: void Set_Pin_Input (unsigned char pin)
+;	-----------------------------------------
+;	 function Set_Pin_Input
+;	-----------------------------------------
+_Set_Pin_Input:
+	mov	r2,dpl
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:268: mask=(1<<(pin&0x7));
+	mov	a,#0x07
+	anl	a,r2
+	mov	b,a
+	inc	b
+	mov	a,#0x01
+	sjmp	L015011?
+L015009?:
+	add	a,acc
+L015011?:
+	djnz	b,L015009?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:269: mask=~mask;
+	cpl	a
+	mov	r3,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:270: switch(pin/0x10)
+	mov	a,r2
+	swap	a
+	anl	a,#0x0f
+	mov  r2,a
+	add	a,#0xff - 0x03
+	jc	L015006?
+	mov	a,r2
+	add	a,r2
+	add	a,r2
+	mov	dptr,#L015013?
+	jmp	@a+dptr
+L015013?:
+	ljmp	L015001?
+	ljmp	L015002?
+	ljmp	L015003?
+	ljmp	L015004?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:272: case 0: P0MDOUT &= mask; break;
+L015001?:
+	mov	a,r3
+	anl	_P0MDOUT,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:273: case 1: P1MDOUT &= mask; break;
+	ret
+L015002?:
+	mov	a,r3
+	anl	_P1MDOUT,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:274: case 2: P2MDOUT &= mask; break; 
+	ret
+L015003?:
+	mov	a,r3
+	anl	_P2MDOUT,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:275: case 3: P3MDOUT &= mask; break; 
+	ret
+L015004?:
+	mov	a,r3
+	anl	_P3MDOUT,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:276: }	
+L015006?:
 	ret
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'InitADC'
 ;------------------------------------------------------------
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:251: void InitADC (void)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:281: void InitADC (void)
 ;	-----------------------------------------
 ;	 function InitADC
 ;	-----------------------------------------
 _InitADC:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:253: SFRPAGE = 0x00;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:283: SFRPAGE = 0x00;
 	mov	_SFRPAGE,#0x00
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:254: ADEN=0; // Disable ADC
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:284: ADEN=0; // Disable ADC
 	clr	_ADEN
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:259: (0x0 << 0) ; // Accumulate n conversions: 0x0: 1, 0x1:4, 0x2:8, 0x3:16, 0x4:32
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:289: (0x0 << 0) ; // Accumulate n conversions: 0x0: 1, 0x1:4, 0x2:8, 0x3:16, 0x4:32
 	mov	_ADC0CN1,#0x80
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:263: (0x0 << 2); // 0:SYSCLK ADCCLK = SYSCLK. 1:HFOSC0 ADCCLK = HFOSC0.
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:293: (0x0 << 2); // 0:SYSCLK ADCCLK = SYSCLK. 1:HFOSC0 ADCCLK = HFOSC0.
 	mov	_ADC0CF0,#0x20
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:267: (0x1E << 0); // Conversion Tracking Time. Tadtk = ADTK / (Fsarclk)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:297: (0x1E << 0); // Conversion Tracking Time. Tadtk = ADTK / (Fsarclk)
 	mov	_ADC0CF1,#0x1E
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:276: (0x0 << 0) ; // TEMPE. 0: Disable the Temperature Sensor. 1: Enable the Temperature Sensor.
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:306: (0x0 << 0) ; // TEMPE. 0: Disable the Temperature Sensor. 1: Enable the Temperature Sensor.
 	mov	_ADC0CN0,#0x00
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:281: (0x1F << 0); // ADPWR. Power Up Delay Time. Tpwrtime = ((4 * (ADPWR + 1)) + 2) / (Fadcclk)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:311: (0x1F << 0); // ADPWR. Power Up Delay Time. Tpwrtime = ((4 * (ADPWR + 1)) + 2) / (Fadcclk)
 	mov	_ADC0CF2,#0x3F
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:285: (0x0 << 0) ; // ADCM. 0x0: ADBUSY, 0x1: TIMER0, 0x2: TIMER2, 0x3: TIMER3, 0x4: CNVSTR, 0x5: CEX5, 0x6: TIMER4, 0x7: TIMER5, 0x8: CLU0, 0x9: CLU1, 0xA: CLU2, 0xB: CLU3
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:315: (0x0 << 0) ; // ADCM. 0x0: ADBUSY, 0x1: TIMER0, 0x2: TIMER2, 0x3: TIMER3, 0x4: CNVSTR, 0x5: CEX5, 0x6: TIMER4, 0x7: TIMER5, 0x8: CLU0, 0x9: CLU1, 0xA: CLU2, 0xB: CLU3
 	mov	_ADC0CN2,#0x00
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:287: ADEN=1; // Enable ADC
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:317: ADEN=1; // Enable ADC
 	setb	_ADEN
 	ret
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'InitPinADC'
 ;------------------------------------------------------------
+;mask                      Allocated with name '_InitPinADC_mask_1_105'
 ;pinno                     Allocated with name '_InitPinADC_PARM_2'
 ;portno                    Allocated to registers r2 
-;mask                      Allocated to registers r3 
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:290: void InitPinADC (unsigned char portno, unsigned char pinno)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:320: void InitPinADC (unsigned char portno, unsigned char pinno)
 ;	-----------------------------------------
 ;	 function InitPinADC
 ;	-----------------------------------------
 _InitPinADC:
 	mov	r2,dpl
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:294: mask=1<<pinno;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:324: mask=1<<pinno;
 	mov	b,_InitPinADC_PARM_2
 	inc	b
 	mov	a,#0x01
-	sjmp	L015013?
-L015011?:
+	sjmp	L017013?
+L017011?:
 	add	a,acc
-L015013?:
-	djnz	b,L015011?
+L017013?:
+	djnz	b,L017011?
 	mov	r3,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:296: SFRPAGE = 0x20;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:326: SFRPAGE = 0x20;
 	mov	_SFRPAGE,#0x20
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:297: switch (portno)
-	cjne	r2,#0x00,L015014?
-	sjmp	L015001?
-L015014?:
-	cjne	r2,#0x01,L015015?
-	sjmp	L015002?
-L015015?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:299: case 0:
-	cjne	r2,#0x02,L015005?
-	sjmp	L015003?
-L015001?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:300: P0MDIN &= (~mask); // Set pin as analog input
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:327: switch (portno)
+	cjne	r2,#0x00,L017014?
+	sjmp	L017001?
+L017014?:
+	cjne	r2,#0x01,L017015?
+	sjmp	L017002?
+L017015?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:329: case 0:
+	cjne	r2,#0x02,L017005?
+	sjmp	L017003?
+L017001?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:330: P0MDIN &= (~mask); // Set pin as analog input
 	mov	a,r3
 	cpl	a
 	mov	r2,a
 	anl	_P0MDIN,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:301: P0SKIP |= mask; // Skip Crossbar decoding for this pin
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:331: P0SKIP |= mask; // Skip Crossbar decoding for this pin
 	mov	a,r3
 	orl	_P0SKIP,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:302: break;
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:303: case 1:
-	sjmp	L015005?
-L015002?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:304: P1MDIN &= (~mask); // Set pin as analog input
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:332: break;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:333: case 1:
+	sjmp	L017005?
+L017002?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:334: P1MDIN &= (~mask); // Set pin as analog input
 	mov	a,r3
 	cpl	a
 	mov	r2,a
 	anl	_P1MDIN,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:305: P1SKIP |= mask; // Skip Crossbar decoding for this pin
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:335: P1SKIP |= mask; // Skip Crossbar decoding for this pin
 	mov	a,r3
 	orl	_P1SKIP,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:306: break;
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:307: case 2:
-	sjmp	L015005?
-L015003?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:308: P2MDIN &= (~mask); // Set pin as analog input
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:336: break;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:337: case 2:
+	sjmp	L017005?
+L017003?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:338: P2MDIN &= (~mask); // Set pin as analog input
 	mov	a,r3
 	cpl	a
 	mov	r2,a
 	anl	_P2MDIN,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:309: P2SKIP |= mask; // Skip Crossbar decoding for this pin
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:339: P2SKIP |= mask; // Skip Crossbar decoding for this pin
 	mov	a,r3
 	orl	_P2SKIP,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:313: }
-L015005?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:314: SFRPAGE = 0x00;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:343: }
+L017005?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:344: SFRPAGE = 0x00;
 	mov	_SFRPAGE,#0x00
 	ret
 ;------------------------------------------------------------
@@ -1224,20 +1369,20 @@ L015005?:
 ;------------------------------------------------------------
 ;pin                       Allocated to registers 
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:317: unsigned int ADC_at_Pin(unsigned char pin)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:347: xdata unsigned int ADC_at_Pin(unsigned char pin)
 ;	-----------------------------------------
 ;	 function ADC_at_Pin
 ;	-----------------------------------------
 _ADC_at_Pin:
 	mov	_ADC0MX,dpl
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:320: ADINT = 0;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:350: ADINT = 0;
 	clr	_ADINT
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:321: ADBUSY = 1;     // Convert voltage at the pin
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:351: ADBUSY = 1;     // Convert voltage at the pin
 	setb	_ADBUSY
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:322: while (!ADINT); // Wait for conversion to complete
-L016001?:
-	jnb	_ADINT,L016001?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:323: return (ADC0);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:352: while (!ADINT); // Wait for conversion to complete
+L018001?:
+	jnb	_ADINT,L018001?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:353: return (ADC0);
 	mov	dpl,_ADC0
 	mov	dph,(_ADC0 >> 8)
 	ret
@@ -1246,12 +1391,12 @@ L016001?:
 ;------------------------------------------------------------
 ;pin                       Allocated to registers r2 
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:326: float Volts_at_Pin(unsigned char pin)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:356: float Volts_at_Pin(unsigned char pin) 
 ;	-----------------------------------------
 ;	 function Volts_at_Pin
 ;	-----------------------------------------
 _Volts_at_Pin:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:328: return ((ADC_at_Pin(pin)*VDD)/0b_0011_1111_1111_1111);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:358: return ((ADC_at_Pin(pin)*VDD)/0b_0011_1111_1111_1111);
 	lcall	_ADC_at_Pin
 	lcall	___uint2fs
 	mov	r2,dpl
@@ -1262,8 +1407,8 @@ _Volts_at_Pin:
 	push	ar3
 	push	ar4
 	push	ar5
-	mov	dptr,#0x8F5C
-	mov	b,#0x52
+	mov	dptr,#0x53F8
+	mov	b,#0x53
 	mov	a,#0x40
 	lcall	___fsmul
 	mov	r2,dpl
@@ -1303,54 +1448,64 @@ _Volts_at_Pin:
 ;------------------------------------------------------------
 ;period                    Allocated to registers r2 r3 r4 r5 
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:331: float ReadPeriod(void)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:361: float ReadPeriod(void)
 ;	-----------------------------------------
 ;	 function ReadPeriod
 ;	-----------------------------------------
 _ReadPeriod:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:334: overflow_count = 0; 
-	mov	_overflow_count,#0x00
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:336: TR0 = 0; // make sure timer0 is stopped
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:364: overflow_count = 0; 
+	mov	dptr,#_overflow_count
+	clr	a
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:366: TR0 = 0; // make sure timer0 is stopped
 	clr	_TR0
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:337: TH0 = 0; TL0 = 0; TF0 = 0;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:367: TH0 = 0; TL0 = 0; TF0 = 0;
 	mov	_TH0,#0x00
 	mov	_TL0,#0x00
 	clr	_TF0
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:340: while(Phasor_ref == 1); // wait for the signal to be zero
-L018001?:
-	jb	_P2_6,L018001?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:341: while(Phasor_ref == 0); // wait for the signal to be one
-L018004?:
-	jnb	_P2_6,L018004?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:342: TR0 = 1; // start timing 
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:370: while(Phasor_ref == 1); // wait for the signal to be zero
+L020001?:
+	jb	_P2_6,L020001?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:371: while(Phasor_ref == 0); // wait for the signal to be one
+L020004?:
+	jnb	_P2_6,L020004?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:372: TR0 = 1; // start timing 
 	setb	_TR0
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:343: while(Phasor_ref == 1) // Wait for the signal to be zero
-L018009?:
-	jnb	_P2_6,L018014?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:345: if(TF0==1) // Did the 16-bit timer overflow?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:347: TF0=0;
-	jbc	_TF0,L018031?
-	sjmp	L018009?
-L018031?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:348: overflow_count++;
-	inc	_overflow_count
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:351: while(Phasor_ref == 0) // Wait for the signal to be one
-	sjmp	L018009?
-L018014?:
-	jb	_P2_6,L018016?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:353: if(TF0==1) // Did the 16-bit timer overflow?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:355: TF0=0;
-	jbc	_TF0,L018033?
-	sjmp	L018014?
-L018033?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:356: overflow_count++;
-	inc	_overflow_count
-	sjmp	L018014?
-L018016?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:359: TR0=0;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:373: while(Phasor_ref == 1) // Wait for the signal to be zero
+L020009?:
+	jnb	_P2_6,L020014?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:375: if(TF0==1) // Did the 16-bit timer overflow?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:377: TF0=0;
+	jbc	_TF0,L020031?
+	sjmp	L020009?
+L020031?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:378: overflow_count++;
+	mov	dptr,#_overflow_count
+	movx	a,@dptr
+	add	a,#0x01
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:381: while(Phasor_ref == 0) // Wait for the signal to be one
+	sjmp	L020009?
+L020014?:
+	jb	_P2_6,L020016?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:383: if(TF0==1) // Did the 16-bit timer overflow?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:385: TF0=0;
+	jbc	_TF0,L020033?
+	sjmp	L020014?
+L020033?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:386: overflow_count++;
+	mov	dptr,#_overflow_count
+	movx	a,@dptr
+	add	a,#0x01
+	movx	@dptr,a
+	sjmp	L020014?
+L020016?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:389: TR0=0;
 	clr	_TR0
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:361: period=(overflow_count * 65536.0 + TH0 * 256.0 + TL0) * (12.0 / SYSCLK);
-	mov	dpl,_overflow_count
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:391: period=(overflow_count * 65536.0 + TH0 * 256.0 + TL0) * (12.0 / SYSCLK);
+	mov	dptr,#_overflow_count
+	movx	a,@dptr
+	mov	dpl,a
 	lcall	___uchar2fs
 	mov	r2,dpl
 	mov	r3,dph
@@ -1464,7 +1619,7 @@ L018016?:
 	mov	a,sp
 	add	a,#0xfc
 	mov	sp,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:362: return period; 
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:392: return period; 
 	mov	dpl,r2
 	mov	dph,r3
 	mov	b,r4
@@ -1475,10 +1630,10 @@ L018016?:
 ;------------------------------------------------------------
 ;vpeak                     Allocated with name '_ReadPeak_PARM_2'
 ;period                    Allocated to registers r2 r3 r4 r5 
-;periodms                  Allocated to registers r2 r3 r4 r5 
-;sloc0                     Allocated with name '_ReadPeak_sloc0_1_0'
+;temp                      Allocated to registers r2 r3 r4 r5 
+;delay_us                  Allocated with name '_ReadPeak_delay_us_1_118'
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:366: void ReadPeak(float period, float *vpeak)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:396: void ReadPeak(float period, float *vpeak)
 ;	-----------------------------------------
 ;	 function ReadPeak
 ;	-----------------------------------------
@@ -1487,7 +1642,22 @@ _ReadPeak:
 	mov	r3,dph
 	mov	r4,b
 	mov	r5,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:368: float periodms = period/4.0 * 1000.0; // Period/4 in ms
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:398: float temp = period * 1e6 / 4; // Period/4 in us
+	push	ar2
+	push	ar3
+	push	ar4
+	push	ar5
+	mov	dptr,#0x2400
+	mov	b,#0x74
+	mov	a,#0x49
+	lcall	___fsmul
+	mov	r2,dpl
+	mov	r3,dph
+	mov	r4,b
+	mov	r5,a
+	mov	a,sp
+	add	a,#0xfc
+	mov	sp,a
 	clr	a
 	push	acc
 	push	acc
@@ -1507,37 +1677,25 @@ _ReadPeak:
 	mov	a,sp
 	add	a,#0xfc
 	mov	sp,a
-	push	ar2
-	push	ar3
-	push	ar4
-	push	ar5
-	mov	dptr,#0x0000
-	mov	b,#0x7A
-	mov	a,#0x44
-	lcall	___fsmul
-	mov	r2,dpl
-	mov	r3,dph
-	mov	r4,b
-	mov	r5,a
-	mov	a,sp
-	add	a,#0xfc
-	mov	sp,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:371: while(Phasor_ref == 1);
-L019001?:
-	jb	_P2_6,L019001?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:372: while(Phasor_ref == 0); 
-L019004?:
-	jnb	_P2_6,L019004?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:373: waitms(periodms);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:399: int delay_us = (int) temp; 
 	mov	dpl,r2
 	mov	dph,r3
 	mov	b,r4
 	mov	a,r5
-	lcall	___fs2uint
-	mov	_ReadPeak_sloc0_1_0,dpl
-	mov  (_ReadPeak_sloc0_1_0 + 1),dph
-	lcall	_waitms
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:374: vpeak[0] = Volts_at_Pin(QFP32_MUX_P2_3);
+	lcall	___fs2sint
+	mov	_ReadPeak_delay_us_1_118,dpl
+	mov	(_ReadPeak_delay_us_1_118 + 1),dph
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:403: while(Phasor_ref == 1);
+L021001?:
+	jb	_P2_6,L021001?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:404: while(Phasor_ref == 0); 
+L021004?:
+	jnb	_P2_6,L021004?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:407: waitus(delay_us);
+	mov	dpl,_ReadPeak_delay_us_1_118
+	mov	dph,(_ReadPeak_delay_us_1_118 + 1)
+	lcall	_waitus
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:408: vpeak[0] = Volts_at_Pin(QFP32_MUX_P2_3);
 	mov	r4,_ReadPeak_PARM_2
 	mov	r5,(_ReadPeak_PARM_2 + 1)
 	mov	r6,(_ReadPeak_PARM_2 + 2)
@@ -1567,23 +1725,23 @@ L019004?:
 	inc	dptr
 	mov	a,r2
 	lcall	__gptrput
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:377: while(Phasor_sig == 1);
-L019007?:
-	jb	_P1_4,L019007?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:378: while(Phasor_sig == 0); 
-L019010?:
-	jnb	_P1_4,L019010?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:379: waitms(periodms);
-	mov	dpl,_ReadPeak_sloc0_1_0
-	mov	dph,(_ReadPeak_sloc0_1_0 + 1)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:410: while(Phasor_sig == 1);
+L021007?:
+	jb	_P1_4,L021007?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:411: while(Phasor_sig == 0);
+L021010?:
+	jnb	_P1_4,L021010?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:413: waitus(delay_us);
+	mov	dpl,_ReadPeak_delay_us_1_118
+	mov	dph,(_ReadPeak_delay_us_1_118 + 1)
 	push	ar4
 	push	ar5
 	push	ar6
-	lcall	_waitms
+	lcall	_waitus
 	pop	ar6
 	pop	ar5
 	pop	ar4
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:380: vpeak[1] = Volts_at_Pin(QFP32_MUX_P1_5); 
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:414: vpeak[1] = Volts_at_Pin(QFP32_MUX_P1_5); 
 	mov	a,#0x04
 	add	a,r4
 	mov	r4,a
@@ -1615,63 +1773,72 @@ L019010?:
 	lcall	__gptrput
 	inc	dptr
 	mov	a,r0
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:382: return; 
 	ljmp	__gptrput
 ;------------------------------------------------------------
 ;Allocation info for local variables in function 'ReadDiff'
 ;------------------------------------------------------------
 ;time_diff                 Allocated to registers r2 r3 r4 r5 
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:385: float ReadDiff(void){
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:419: float ReadDiff(void){
 ;	-----------------------------------------
 ;	 function ReadDiff
 ;	-----------------------------------------
 _ReadDiff:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:388: TH0 = 0; 
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:422: TH0 = 0; 
 	mov	_TH0,#0x00
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:389: TL0 = 0;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:423: TL0 = 0;
 	mov	_TL0,#0x00
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:390: TR0 = 0; 
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:424: TR0 = 0; 
 	clr	_TR0
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:391: TF0 = 0;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:425: TF0 = 0;
 	clr	_TF0
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:392: overflow_count = 0;
-	mov	_overflow_count,#0x00
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:394: while(Phasor_ref == 1);
-L020001?:
-	jb	_P2_6,L020001?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:395: while(Phasor_ref == 0);
-L020004?:
-	jnb	_P2_6,L020004?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:396: TR0 = 1; 
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:426: overflow_count = 0;
+	mov	dptr,#_overflow_count
+	clr	a
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:428: while(Phasor_ref == 1);
+L022001?:
+	jb	_P2_6,L022001?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:429: while(Phasor_ref == 0);
+L022004?:
+	jnb	_P2_6,L022004?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:430: TR0 = 1; 
 	setb	_TR0
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:397: while(Phasor_sig == 1) // Wait for the signal to be zero
-L020009?:
-	jnb	_P1_4,L020014?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:399: if(TF0==1) // Did the 16-bit timer overflow?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:401: TF0=0;
-	jbc	_TF0,L020031?
-	sjmp	L020009?
-L020031?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:402: overflow_count++;
-	inc	_overflow_count
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:405: while(Phasor_sig == 0) // Wait for the signal to be one
-	sjmp	L020009?
-L020014?:
-	jb	_P1_4,L020016?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:407: if(TF0==1) // Did the 16-bit timer overflow?
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:409: TF0=0;
-	jbc	_TF0,L020033?
-	sjmp	L020014?
-L020033?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:410: overflow_count++;
-	inc	_overflow_count
-	sjmp	L020014?
-L020016?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:413: TR0=0;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:431: while(Phasor_sig == 1) // Wait for the signal to be zero
+L022009?:
+	jnb	_P1_4,L022014?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:433: if(TF0==1) // Did the 16-bit timer overflow?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:435: TF0=0;
+	jbc	_TF0,L022031?
+	sjmp	L022009?
+L022031?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:436: overflow_count++;
+	mov	dptr,#_overflow_count
+	movx	a,@dptr
+	add	a,#0x01
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:439: while(Phasor_sig == 0) // Wait for the signal to be one
+	sjmp	L022009?
+L022014?:
+	jb	_P1_4,L022016?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:441: if(TF0==1) // Did the 16-bit timer overflow?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:443: TF0=0;
+	jbc	_TF0,L022033?
+	sjmp	L022014?
+L022033?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:444: overflow_count++;
+	mov	dptr,#_overflow_count
+	movx	a,@dptr
+	add	a,#0x01
+	movx	@dptr,a
+	sjmp	L022014?
+L022016?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:447: TR0=0;
 	clr	_TR0
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:414: time_diff=(overflow_count * 65536.0 + TH0 * 256.0 + TL0) * (12.0 / SYSCLK);
-	mov	dpl,_overflow_count
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:448: time_diff=(overflow_count * 65536.0 + TH0 * 256.0 + TL0) * (12.0 / SYSCLK);
+	mov	dptr,#_overflow_count
+	movx	a,@dptr
+	mov	dpl,a
 	lcall	___uchar2fs
 	mov	r2,dpl
 	mov	r3,dph
@@ -1785,69 +1952,142 @@ L020016?:
 	mov	a,sp
 	add	a,#0xfc
 	mov	sp,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:415: return time_diff; 
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:449: return time_diff; 
 	mov	dpl,r2
 	mov	dph,r3
 	mov	b,r4
 	mov	a,r5
 	ret
 ;------------------------------------------------------------
-;Allocation info for local variables in function 'main'
+;Allocation info for local variables in function 'DisplayMenu'
 ;------------------------------------------------------------
-;vpeak                     Allocated with name '_main_vpeak_1_119'
-;v_rms                     Allocated with name '_main_v_rms_1_119'
-;period                    Allocated with name '_main_period_1_119'
-;time_diff                 Allocated with name '_main_time_diff_1_119'
-;phase_diff                Allocated with name '_main_phase_diff_1_119'
-;frequency                 Allocated to registers r6 r7 r2 r3 
-;sloc0                     Allocated with name '_main_sloc0_1_0'
+;units                     Allocated with name '_DisplayMenu_PARM_2'
+;menu                      Allocated to registers r2 r3 
+;buff                      Allocated with name '_DisplayMenu_buff_1_126'
 ;------------------------------------------------------------
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:419: void main (void)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:453: void DisplayMenu(int menu, int units)
 ;	-----------------------------------------
-;	 function main
+;	 function DisplayMenu
 ;	-----------------------------------------
-_main:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:430: TIMER0_Init();
-	lcall	_TIMER0_Init
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:431: LCD_4BIT(); 
-	lcall	_LCD_4BIT
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:432: InitPinADC(1, 5); // Configure P1.5 as analog input - signal 
-	mov	_InitPinADC_PARM_2,#0x05
-	mov	dpl,#0x01
-	lcall	_InitPinADC
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:433: InitPinADC(2, 3); // Configure P2.3 as analog input - reference
-	mov	_InitPinADC_PARM_2,#0x03
-	mov	dpl,#0x02
-	lcall	_InitPinADC
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:434: InitADC();
-	lcall	_InitADC
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:435: waitms(500); // Give PuTTy a chance to start before sending
-	mov	dptr,#0x01F4
-	lcall	_waitms
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:436: printf("\x1b[2J"); // Clear screen using ANSI escape sequence.
+_DisplayMenu:
+	mov	r2,dpl
+	mov	r3,dph
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:457: switch(menu)
+	cjne	r2,#0x00,L023014?
+	cjne	r3,#0x00,L023014?
+	sjmp	L023001?
+L023014?:
+	cjne	r2,#0x01,L023015?
+	cjne	r3,#0x00,L023015?
+	ljmp	L023005?
+L023015?:
+	cjne	r2,#0x02,L023016?
+	cjne	r3,#0x00,L023016?
+	ljmp	L023006?
+L023016?:
+	ret
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:459: case 0:
+L023001?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:460: if (units) // display peak
+	mov	a,_DisplayMenu_PARM_2
+	orl	a,(_DisplayMenu_PARM_2 + 1)
+	jnz	L023017?
+	ljmp	L023003?
+L023017?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:462: sprintf(buff, "Vr=%.1fV", vpeak[0]);
+	mov	dptr,#_vpeak
+	movx	a,@dptr
+	mov	r2,a
+	inc	dptr
+	movx	a,@dptr
+	mov	r3,a
+	inc	dptr
+	movx	a,@dptr
+	mov	r4,a
+	inc	dptr
+	movx	a,@dptr
+	mov	r5,a
+	push	ar2
+	push	ar3
+	push	ar4
+	push	ar5
 	mov	a,#__str_0
 	push	acc
 	mov	a,#(__str_0 >> 8)
 	push	acc
 	mov	a,#0x80
 	push	acc
-	lcall	_printf
-	dec	sp
-	dec	sp
-	dec	sp
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:442: __FILE__, __DATE__, __TIME__);
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:441: "Compiled: %s, %s\n\n",
-	mov	a,#__str_4
+	mov	a,#_DisplayMenu_buff_1_126
 	push	acc
-	mov	a,#(__str_4 >> 8)
+	mov	a,#(_DisplayMenu_buff_1_126 >> 8)
+	push	acc
+	clr	a
+	push	acc
+	lcall	_sprintf
+	mov	a,sp
+	add	a,#0xf6
+	mov	sp,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:463: LCDprint(buff, 1, 0, 1);
+	mov	_LCDprint_PARM_2,#0x01
+	mov	_LCDprint_PARM_3,#0x00
+	setb	_LCDprint_PARM_4
+	mov	dptr,#_DisplayMenu_buff_1_126
+	mov	b,#0x00
+	lcall	_LCDprint
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:464: sprintf(buff, "Vs=%.1fV", vpeak[1]);
+	mov	dptr,#(_vpeak + 0x0004)
+	movx	a,@dptr
+	mov	r2,a
+	inc	dptr
+	movx	a,@dptr
+	mov	r3,a
+	inc	dptr
+	movx	a,@dptr
+	mov	r4,a
+	inc	dptr
+	movx	a,@dptr
+	mov	r5,a
+	push	ar2
+	push	ar3
+	push	ar4
+	push	ar5
+	mov	a,#__str_1
+	push	acc
+	mov	a,#(__str_1 >> 8)
 	push	acc
 	mov	a,#0x80
 	push	acc
-	mov	a,#__str_3
+	mov	a,#_DisplayMenu_buff_1_126
 	push	acc
-	mov	a,#(__str_3 >> 8)
+	mov	a,#(_DisplayMenu_buff_1_126 >> 8)
 	push	acc
-	mov	a,#0x80
+	clr	a
+	push	acc
+	lcall	_sprintf
+	mov	a,sp
+	add	a,#0xf6
+	mov	sp,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:465: LCDprint(buff, 2, 0, 1);
+	mov	_LCDprint_PARM_2,#0x02
+	mov	_LCDprint_PARM_3,#0x00
+	setb	_LCDprint_PARM_4
+	mov	dptr,#_DisplayMenu_buff_1_126
+	mov	b,#0x00
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:467: break; 
+	ljmp	_LCDprint
+L023003?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:472: sprintf(buff, "%.1f",phase_diff);
+	mov	dptr,#_phase_diff
+	movx	a,@dptr
+	push	acc
+	inc	dptr
+	movx	a,@dptr
+	push	acc
+	inc	dptr
+	movx	a,@dptr
+	push	acc
+	inc	dptr
+	movx	a,@dptr
 	push	acc
 	mov	a,#__str_2
 	push	acc
@@ -1855,9 +2095,137 @@ _main:
 	push	acc
 	mov	a,#0x80
 	push	acc
-	mov	a,#__str_1
+	mov	a,#_DisplayMenu_buff_1_126
 	push	acc
-	mov	a,#(__str_1 >> 8)
+	mov	a,#(_DisplayMenu_buff_1_126 >> 8)
+	push	acc
+	clr	a
+	push	acc
+	lcall	_sprintf
+	mov	a,sp
+	add	a,#0xf6
+	mov	sp,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:473: LCDprint(buff, 2, 0, 1);
+	mov	_LCDprint_PARM_2,#0x02
+	mov	_LCDprint_PARM_3,#0x00
+	setb	_LCDprint_PARM_4
+	mov	dptr,#_DisplayMenu_buff_1_126
+	mov	b,#0x00
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:477: break; 
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:480: case 1: // main menu 
+	ljmp	_LCDprint
+L023005?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:481: LCDprint("Phasor", 1, 4, 1);
+	mov	_LCDprint_PARM_2,#0x01
+	mov	_LCDprint_PARM_3,#0x04
+	setb	_LCDprint_PARM_4
+	mov	dptr,#__str_3
+	mov	b,#0x80
+	lcall	_LCDprint
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:482: LCDprint("<    Meter     >", 2, 0, 1);
+	mov	_LCDprint_PARM_2,#0x02
+	mov	_LCDprint_PARM_3,#0x00
+	setb	_LCDprint_PARM_4
+	mov	dptr,#__str_4
+	mov	b,#0x80
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:483: break;
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:484: case 2: 
+	ljmp	_LCDprint
+L023006?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:485: LCDprint("2", 1, 0, 1);
+	mov	_LCDprint_PARM_2,#0x01
+	mov	_LCDprint_PARM_3,#0x00
+	setb	_LCDprint_PARM_4
+	mov	dptr,#__str_5
+	mov	b,#0x80
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:490: }
+	ljmp	_LCDprint
+;------------------------------------------------------------
+;Allocation info for local variables in function 'main'
+;------------------------------------------------------------
+;sloc0                     Allocated with name '_main_sloc0_1_0'
+;sloc1                     Allocated with name '_main_sloc1_1_0'
+;v_rms                     Allocated with name '_main_v_rms_1_131'
+;units                     Allocated with name '_main_units_1_131'
+;period                    Allocated with name '_main_period_1_131'
+;time_diff                 Allocated with name '_main_time_diff_1_131'
+;menu                      Allocated with name '_main_menu_1_131'
+;------------------------------------------------------------
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:493: void main (void)
+;	-----------------------------------------
+;	 function main
+;	-----------------------------------------
+_main:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:497: xdata int units = 0; 
+	mov	dptr,#_main_units_1_131
+	clr	a
+	movx	@dptr,a
+	inc	dptr
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:502: xdata int menu = 1; 
+	mov	dptr,#_main_menu_1_131
+	mov	a,#0x01
+	movx	@dptr,a
+	clr	a
+	inc	dptr
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:504: TIMER0_Init();
+	lcall	_TIMER0_Init
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:505: LCD_4BIT(); 
+	lcall	_LCD_4BIT
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:508: InitPinADC(2,1);
+	mov	_InitPinADC_PARM_2,#0x01
+	mov	dpl,#0x02
+	lcall	_InitPinADC
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:509: InitPinADC(2,2);
+	mov	_InitPinADC_PARM_2,#0x02
+	mov	dpl,#0x02
+	lcall	_InitPinADC
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:510: InitADC();
+	lcall	_InitADC
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:511: Set_Pin_Input(0x31);
+	mov	dpl,#0x31
+	lcall	_Set_Pin_Input
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:512: Set_Pin_Input(0X25);
+	mov	dpl,#0x25
+	lcall	_Set_Pin_Input
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:513: waitms(500); // Give PuTTy a chance to start before sending
+	mov	dptr,#0x01F4
+	lcall	_waitms
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:514: printf("\x1b[2J"); // Clear screen using ANSI escape sequence.
+	mov	a,#__str_6
+	push	acc
+	mov	a,#(__str_6 >> 8)
+	push	acc
+	mov	a,#0x80
+	push	acc
+	lcall	_printf
+	dec	sp
+	dec	sp
+	dec	sp
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:520: __FILE__, __DATE__, __TIME__);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:519: "Compiled: %s, %s\n\n",
+	mov	a,#__str_10
+	push	acc
+	mov	a,#(__str_10 >> 8)
+	push	acc
+	mov	a,#0x80
+	push	acc
+	mov	a,#__str_9
+	push	acc
+	mov	a,#(__str_9 >> 8)
+	push	acc
+	mov	a,#0x80
+	push	acc
+	mov	a,#__str_8
+	push	acc
+	mov	a,#(__str_8 >> 8)
+	push	acc
+	mov	a,#0x80
+	push	acc
+	mov	a,#__str_7
+	push	acc
+	mov	a,#(__str_7 >> 8)
 	push	acc
 	mov	a,#0x80
 	push	acc
@@ -1865,68 +2233,58 @@ _main:
 	mov	a,sp
 	add	a,#0xf4
 	mov	sp,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:443: while(1)
-L021002?:
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:445: period = ReadPeriod();
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:521: while(1)
+L024022?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:523: period = ReadPeriod();
 	lcall	_ReadPeriod
-	mov	_main_period_1_119,dpl
-	mov	(_main_period_1_119 + 1),dph
-	mov	(_main_period_1_119 + 2),b
-	mov	(_main_period_1_119 + 3),a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:447: ReadPeak(period, vpeak);
-	mov	_ReadPeak_PARM_2,#_main_vpeak_1_119
-	mov	(_ReadPeak_PARM_2 + 1),#0x00
-	mov	(_ReadPeak_PARM_2 + 2),#0x40
-	mov	dpl,_main_period_1_119
-	mov	dph,(_main_period_1_119 + 1)
-	mov	b,(_main_period_1_119 + 2)
-	mov	a,(_main_period_1_119 + 3)
-	lcall	_ReadPeak
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:448: time_diff = ReadDiff();
-	lcall	_ReadDiff
-	mov	_main_time_diff_1_119,dpl
-	mov	(_main_time_diff_1_119 + 1),dph
-	mov	(_main_time_diff_1_119 + 2),b
-	mov	(_main_time_diff_1_119 + 3),a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:450: v_rms[0] = vpeak[0] / sqrtf(2); 
-	mov	_main_sloc0_1_0,_main_vpeak_1_119
-	mov	(_main_sloc0_1_0 + 1),(_main_vpeak_1_119 + 1)
-	mov	(_main_sloc0_1_0 + 2),(_main_vpeak_1_119 + 2)
-	mov	(_main_sloc0_1_0 + 3),(_main_vpeak_1_119 + 3)
-	mov	dptr,#(0x00&0x00ff)
-	clr	a
-	mov	b,a
-	mov	a,#0x40
-	lcall	_sqrtf
-	mov	r4,dpl
-	mov	r5,dph
-	mov	r2,b
-	mov	r3,a
-	push	ar4
-	push	ar5
-	push	ar2
-	push	ar3
-	mov	dpl,_main_sloc0_1_0
-	mov	dph,(_main_sloc0_1_0 + 1)
-	mov	b,(_main_sloc0_1_0 + 2)
-	mov	a,(_main_sloc0_1_0 + 3)
-	lcall	___fsdiv
 	mov	r2,dpl
 	mov	r3,dph
 	mov	r4,b
 	mov	r5,a
-	mov	a,sp
-	add	a,#0xfc
-	mov	sp,a
-	mov	_main_v_rms_1_119,r2
-	mov	(_main_v_rms_1_119 + 1),r3
-	mov	(_main_v_rms_1_119 + 2),r4
-	mov	(_main_v_rms_1_119 + 3),r5
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:451: v_rms[1] = vpeak[1] / sqrtf(2); 
-	mov	_main_sloc0_1_0,(_main_vpeak_1_119 + 0x0004)
-	mov	(_main_sloc0_1_0 + 1),((_main_vpeak_1_119 + 0x0004) + 1)
-	mov	(_main_sloc0_1_0 + 2),((_main_vpeak_1_119 + 0x0004) + 2)
-	mov	(_main_sloc0_1_0 + 3),((_main_vpeak_1_119 + 0x0004) + 3)
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:525: ReadPeak(period, vpeak);
+	mov	_ReadPeak_PARM_2,#_vpeak
+	mov	(_ReadPeak_PARM_2 + 1),#(_vpeak >> 8)
+	mov	(_ReadPeak_PARM_2 + 2),#0x00
+	mov	dpl,r2
+	mov	dph,r3
+	mov	b,r4
+	mov	a,r5
+	push	ar2
+	push	ar3
+	push	ar4
+	push	ar5
+	lcall	_ReadPeak
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:526: time_diff = ReadDiff();
+	lcall	_ReadDiff
+	mov	_main_sloc0_1_0,dpl
+	mov	(_main_sloc0_1_0 + 1),dph
+	mov	(_main_sloc0_1_0 + 2),b
+	mov	(_main_sloc0_1_0 + 3),a
+	mov	dptr,#_main_time_diff_1_131
+	mov	a,_main_sloc0_1_0
+	movx	@dptr,a
+	inc	dptr
+	mov	a,(_main_sloc0_1_0 + 1)
+	movx	@dptr,a
+	inc	dptr
+	mov	a,(_main_sloc0_1_0 + 2)
+	movx	@dptr,a
+	inc	dptr
+	mov	a,(_main_sloc0_1_0 + 3)
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:528: v_rms[0] = vpeak[0] / sqrtf(2); 
+	mov	dptr,#_vpeak
+	movx	a,@dptr
+	mov	_main_sloc1_1_0,a
+	inc	dptr
+	movx	a,@dptr
+	mov	(_main_sloc1_1_0 + 1),a
+	inc	dptr
+	movx	a,@dptr
+	mov	(_main_sloc1_1_0 + 2),a
+	inc	dptr
+	movx	a,@dptr
+	mov	(_main_sloc1_1_0 + 3),a
 	mov	dptr,#(0x00&0x00ff)
 	clr	a
 	mov	b,a
@@ -1934,117 +2292,517 @@ L021002?:
 	lcall	_sqrtf
 	mov	r6,dpl
 	mov	r7,dph
-	mov	r2,b
-	mov	r3,a
+	mov	r0,b
+	mov	r1,a
 	push	ar6
 	push	ar7
+	push	ar0
+	push	ar1
+	mov	dpl,_main_sloc1_1_0
+	mov	dph,(_main_sloc1_1_0 + 1)
+	mov	b,(_main_sloc1_1_0 + 2)
+	mov	a,(_main_sloc1_1_0 + 3)
+	lcall	___fsdiv
+	mov	r6,dpl
+	mov	r7,dph
+	mov	r0,b
+	mov	r1,a
+	mov	a,sp
+	add	a,#0xfc
+	mov	sp,a
+	mov	dptr,#_main_v_rms_1_131
+	mov	a,r6
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r7
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r0
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r1
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:529: v_rms[1] = vpeak[1] / sqrtf(2); 
+	mov	dptr,#(_vpeak + 0x0004)
+	movx	a,@dptr
+	mov	_main_sloc1_1_0,a
+	inc	dptr
+	movx	a,@dptr
+	mov	(_main_sloc1_1_0 + 1),a
+	inc	dptr
+	movx	a,@dptr
+	mov	(_main_sloc1_1_0 + 2),a
+	inc	dptr
+	movx	a,@dptr
+	mov	(_main_sloc1_1_0 + 3),a
+	mov	dptr,#(0x00&0x00ff)
+	clr	a
+	mov	b,a
+	mov	a,#0x40
+	lcall	_sqrtf
+	mov	r6,dpl
+	mov	r7,dph
+	mov	r0,b
+	mov	r1,a
+	push	ar6
+	push	ar7
+	push	ar0
+	push	ar1
+	mov	dpl,_main_sloc1_1_0
+	mov	dph,(_main_sloc1_1_0 + 1)
+	mov	b,(_main_sloc1_1_0 + 2)
+	mov	a,(_main_sloc1_1_0 + 3)
+	lcall	___fsdiv
+	mov	r6,dpl
+	mov	r7,dph
+	mov	r0,b
+	mov	r1,a
+	mov	a,sp
+	add	a,#0xfc
+	mov	sp,a
+	pop	ar5
+	pop	ar4
+	pop	ar3
+	pop	ar2
+	mov	dptr,#(_main_v_rms_1_131 + 0x0004)
+	mov	a,r6
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r7
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r0
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r1
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:530: if (time_diff > (period / 2.0))
 	push	ar2
 	push	ar3
+	push	ar4
+	push	ar5
+	clr	a
+	push	acc
+	push	acc
+	push	acc
+	mov	a,#0x40
+	push	acc
+	mov	dpl,r2
+	mov	dph,r3
+	mov	b,r4
+	mov	a,r5
+	lcall	___fsdiv
+	mov	r6,dpl
+	mov	r7,dph
+	mov	r0,b
+	mov	r1,a
+	mov	a,sp
+	add	a,#0xfc
+	mov	sp,a
+	push	ar6
+	push	ar7
+	push	ar0
+	push	ar1
 	mov	dpl,_main_sloc0_1_0
 	mov	dph,(_main_sloc0_1_0 + 1)
 	mov	b,(_main_sloc0_1_0 + 2)
 	mov	a,(_main_sloc0_1_0 + 3)
-	lcall	___fsdiv
-	mov	_main_sloc0_1_0,dpl
-	mov	(_main_sloc0_1_0 + 1),dph
-	mov	(_main_sloc0_1_0 + 2),b
-	mov	(_main_sloc0_1_0 + 3),a
+	lcall	___fsgt
+	mov	r6,dpl
 	mov	a,sp
 	add	a,#0xfc
 	mov	sp,a
-	mov	(_main_v_rms_1_119 + 0x0004),_main_sloc0_1_0
-	mov	((_main_v_rms_1_119 + 0x0004) + 1),(_main_sloc0_1_0 + 1)
-	mov	((_main_v_rms_1_119 + 0x0004) + 2),(_main_sloc0_1_0 + 2)
-	mov	((_main_v_rms_1_119 + 0x0004) + 3),(_main_sloc0_1_0 + 3)
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:452: phase_diff = time_diff * 360.0 / period; 
-	push	_main_time_diff_1_119
-	push	(_main_time_diff_1_119 + 1)
-	push	(_main_time_diff_1_119 + 2)
-	push	(_main_time_diff_1_119 + 3)
+	pop	ar5
+	pop	ar4
+	pop	ar3
+	pop	ar2
+	mov	a,r6
+	jz	L024002?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:532: time_diff -= period; 
+	push	ar2
+	push	ar3
+	push	ar4
+	push	ar5
+	push	ar2
+	push	ar3
+	push	ar4
+	push	ar5
+	mov	dpl,_main_sloc0_1_0
+	mov	dph,(_main_sloc0_1_0 + 1)
+	mov	b,(_main_sloc0_1_0 + 2)
+	mov	a,(_main_sloc0_1_0 + 3)
+	lcall	___fssub
+	mov	r6,dpl
+	mov	r7,dph
+	mov	r0,b
+	mov	r1,a
+	mov	a,sp
+	add	a,#0xfc
+	mov	sp,a
+	pop	ar5
+	pop	ar4
+	pop	ar3
+	pop	ar2
+	mov	dptr,#_main_time_diff_1_131
+	mov	a,r6
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r7
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r0
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r1
+	movx	@dptr,a
+L024002?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:534: phase_diff = time_diff * -360.0 / period; 
+	push	ar2
+	push	ar3
+	push	ar4
+	push	ar5
+	mov	dptr,#_main_time_diff_1_131
+	movx	a,@dptr
+	push	acc
+	inc	dptr
+	movx	a,@dptr
+	push	acc
+	inc	dptr
+	movx	a,@dptr
+	push	acc
+	inc	dptr
+	movx	a,@dptr
+	push	acc
 	mov	dptr,#0x0000
 	mov	b,#0xB4
-	mov	a,#0x43
+	mov	a,#0xC3
 	lcall	___fsmul
 	mov	r6,dpl
 	mov	r7,dph
-	mov	r2,b
-	mov	r3,a
+	mov	r0,b
+	mov	r1,a
 	mov	a,sp
 	add	a,#0xfc
 	mov	sp,a
-	push	_main_period_1_119
-	push	(_main_period_1_119 + 1)
-	push	(_main_period_1_119 + 2)
-	push	(_main_period_1_119 + 3)
+	pop	ar5
+	pop	ar4
+	pop	ar3
+	pop	ar2
+	push	ar2
+	push	ar3
+	push	ar4
+	push	ar5
+	push	ar2
+	push	ar3
+	push	ar4
+	push	ar5
 	mov	dpl,r6
 	mov	dph,r7
-	mov	b,r2
-	mov	a,r3
+	mov	b,r0
+	mov	a,r1
 	lcall	___fsdiv
-	mov	_main_phase_diff_1_119,dpl
-	mov	(_main_phase_diff_1_119 + 1),dph
-	mov	(_main_phase_diff_1_119 + 2),b
-	mov	(_main_phase_diff_1_119 + 3),a
+	mov	r6,dpl
+	mov	r7,dph
+	mov	r0,b
+	mov	r1,a
 	mov	a,sp
 	add	a,#0xfc
 	mov	sp,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:453: frequency = 1.0/ period;
-	push	_main_period_1_119
-	push	(_main_period_1_119 + 1)
-	push	(_main_period_1_119 + 2)
-	push	(_main_period_1_119 + 3)
+	pop	ar5
+	pop	ar4
+	pop	ar3
+	pop	ar2
+	mov	dptr,#_phase_diff
+	mov	a,r6
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r7
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r0
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r1
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:535: frequency = 1.0/ period;
+	push	ar2
+	push	ar3
+	push	ar4
+	push	ar5
+	push	ar2
+	push	ar3
+	push	ar4
+	push	ar5
 	mov	dptr,#0x0000
 	mov	b,#0x80
 	mov	a,#0x3F
 	lcall	___fsdiv
 	mov	r6,dpl
 	mov	r7,dph
-	mov	r2,b
-	mov	r3,a
+	mov	r0,b
+	mov	r1,a
 	mov	a,sp
 	add	a,#0xfc
 	mov	sp,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:455: printf("Vp_ref = %.3fV, Vp_sig = %.3fV, Phase Diff = %.3fdeg, f = %.3fHz\r", v_rms[0], v_rms[1], phase_diff, frequency);
-	push	ar6
-	push	ar7
+	mov	dptr,#_frequency
+	mov	a,r6
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r7
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r0
+	movx	@dptr,a
+	inc	dptr
+	mov	a,r1
+	movx	@dptr,a
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:537: if (ReadButtonDebounced(Buttonleft)){
+	mov	dpl,#0x31
+	lcall	_ReadButtonDebounced
+	clr	a
+	rlc	a
+	pop	ar5
+	pop	ar4
+	pop	ar3
+	pop	ar2
+	jz	L024019?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:538: if (menu == 1) menu = 0; 
+	mov	dptr,#_main_menu_1_131
+	movx	a,@dptr
+	mov	r6,a
+	inc	dptr
+	movx	a,@dptr
+	mov	r7,a
+	cjne	r6,#0x01,L024009?
+	cjne	r7,#0x00,L024009?
+	mov	dptr,#_main_menu_1_131
+	clr	a
+	movx	@dptr,a
+	inc	dptr
+	movx	@dptr,a
+	sjmp	L024010?
+L024009?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:539: else if (menu == 2) menu = 1; 
+	cjne	r6,#0x02,L024006?
+	cjne	r7,#0x00,L024006?
+	mov	dptr,#_main_menu_1_131
+	mov	a,#0x01
+	movx	@dptr,a
+	clr	a
+	inc	dptr
+	movx	@dptr,a
+	sjmp	L024010?
+L024006?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:540: else if (menu == 0) units = ~units; 
+	mov	a,r6
+	orl	a,r7
+	jnz	L024010?
+	mov	dptr,#_main_units_1_131
+	movx	a,@dptr
+	mov	r6,a
+	inc	dptr
+	movx	a,@dptr
+	mov	r7,a
+	mov	dptr,#_main_units_1_131
+	mov	a,r6
+	cpl	a
+	movx	@dptr,a
+	mov	a,r7
+	cpl	a
+	inc	dptr
+	movx	@dptr,a
+L024010?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:541: WriteCommand(0x01);
+	mov	dpl,#0x01
 	push	ar2
 	push	ar3
-	push	_main_phase_diff_1_119
-	push	(_main_phase_diff_1_119 + 1)
-	push	(_main_phase_diff_1_119 + 2)
-	push	(_main_phase_diff_1_119 + 3)
-	push	_main_sloc0_1_0
-	push	(_main_sloc0_1_0 + 1)
-	push	(_main_sloc0_1_0 + 2)
-	push	(_main_sloc0_1_0 + 3)
-	push	_main_v_rms_1_119
-	push	(_main_v_rms_1_119 + 1)
-	push	(_main_v_rms_1_119 + 2)
-	push	(_main_v_rms_1_119 + 3)
-	mov	a,#__str_5
+	push	ar4
+	push	ar5
+	lcall	_WriteCommand
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:542: waitms(5);
+	mov	dptr,#0x0005
+	lcall	_waitms
+	pop	ar5
+	pop	ar4
+	pop	ar3
+	pop	ar2
+	sjmp	L024020?
+L024019?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:545: else if (ReadButtonDebounced(Buttonright)){
+	mov	dpl,#0x25
+	push	ar2
+	push	ar3
+	push	ar4
+	push	ar5
+	lcall	_ReadButtonDebounced
+	clr	a
+	rlc	a
+	pop	ar5
+	pop	ar4
+	pop	ar3
+	pop	ar2
+	jz	L024020?
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:546: if (menu == 0) menu = 1; 
+	mov	dptr,#_main_menu_1_131
+	movx	a,@dptr
+	mov	r6,a
+	inc	dptr
+	movx	a,@dptr
+	mov	r7,a
+	orl	a,r6
+	jnz	L024014?
+	mov	dptr,#_main_menu_1_131
+	mov	a,#0x01
+	movx	@dptr,a
+	clr	a
+	inc	dptr
+	movx	@dptr,a
+	sjmp	L024015?
+L024014?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:547: else if (menu == 1) menu = 2; 
+	cjne	r6,#0x01,L024015?
+	cjne	r7,#0x00,L024015?
+	mov	dptr,#_main_menu_1_131
+	mov	a,#0x02
+	movx	@dptr,a
+	clr	a
+	inc	dptr
+	movx	@dptr,a
+L024015?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:548: WriteCommand(0x01);
+	mov	dpl,#0x01
+	push	ar2
+	push	ar3
+	push	ar4
+	push	ar5
+	lcall	_WriteCommand
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:549: waitms(5);
+	mov	dptr,#0x0005
+	lcall	_waitms
+	pop	ar5
+	pop	ar4
+	pop	ar3
+	pop	ar2
+L024020?:
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:551: DisplayMenu(menu, units);
+	mov	dptr,#_main_menu_1_131
+	movx	a,@dptr
+	mov	r6,a
+	inc	dptr
+	movx	a,@dptr
+	mov	r7,a
+	mov	dptr,#_main_units_1_131
+	movx	a,@dptr
+	mov	_DisplayMenu_PARM_2,a
+	inc	dptr
+	movx	a,@dptr
+	mov	(_DisplayMenu_PARM_2 + 1),a
+	mov	dpl,r6
+	mov	dph,r7
+	push	ar2
+	push	ar3
+	push	ar4
+	push	ar5
+	lcall	_DisplayMenu
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:553: printf("Vp_ref = %.3fV, Vp_sig = %.3fV, Phase Diff = %.3fdeg, f = %.3fHz, T = %.3fs\r", vpeak[0], vpeak[1], phase_diff, frequency, period);        
+	mov	dptr,#(_vpeak + 0x0004)
+	movx	a,@dptr
+	mov	_main_sloc1_1_0,a
+	inc	dptr
+	movx	a,@dptr
+	mov	(_main_sloc1_1_0 + 1),a
+	inc	dptr
+	movx	a,@dptr
+	mov	(_main_sloc1_1_0 + 2),a
+	inc	dptr
+	movx	a,@dptr
+	mov	(_main_sloc1_1_0 + 3),a
+	mov	dptr,#_vpeak
+	movx	a,@dptr
+	mov	r6,a
+	inc	dptr
+	movx	a,@dptr
+	mov	r7,a
+	inc	dptr
+	movx	a,@dptr
+	mov	r0,a
+	inc	dptr
+	movx	a,@dptr
+	mov	r1,a
+	mov	dptr,#_frequency
+	movx	a,@dptr
 	push	acc
-	mov	a,#(__str_5 >> 8)
+	inc	dptr
+	movx	a,@dptr
+	push	acc
+	inc	dptr
+	movx	a,@dptr
+	push	acc
+	inc	dptr
+	movx	a,@dptr
+	push	acc
+	mov	dptr,#_phase_diff
+	movx	a,@dptr
+	push	acc
+	inc	dptr
+	movx	a,@dptr
+	push	acc
+	inc	dptr
+	movx	a,@dptr
+	push	acc
+	inc	dptr
+	movx	a,@dptr
+	push	acc
+	push	_main_sloc1_1_0
+	push	(_main_sloc1_1_0 + 1)
+	push	(_main_sloc1_1_0 + 2)
+	push	(_main_sloc1_1_0 + 3)
+	push	ar6
+	push	ar7
+	push	ar0
+	push	ar1
+	mov	a,#__str_11
+	push	acc
+	mov	a,#(__str_11 >> 8)
 	push	acc
 	mov	a,#0x80
 	push	acc
 	lcall	_printf
 	mov	a,sp
-	add	a,#0xed
+	add	a,#0xe9
 	mov	sp,a
-;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:456: waitms(500);
+;	C:\Users\wongh\OneDrive - UBC\UBC\Year 2\ELEC 291\ELEC-291\Lab5\Lab5.c:554: waitms(500);
 	mov	dptr,#0x01F4
 	lcall	_waitms
-	ljmp	L021002?
+	ljmp	L024022?
 	rseg R_CSEG
 
 	rseg R_XINIT
 
 	rseg R_CONST
 __str_0:
+	db 'Vr=%.1fV'
+	db 0x00
+__str_1:
+	db 'Vs=%.1fV'
+	db 0x00
+__str_2:
+	db '%.1f'
+	db 0x00
+__str_3:
+	db 'Phasor'
+	db 0x00
+__str_4:
+	db '<    Meter     >'
+	db 0x00
+__str_5:
+	db '2'
+	db 0x00
+__str_6:
 	db 0x1B
 	db '[2J'
 	db 0x00
-__str_1:
+__str_7:
 	db 'Phasor Meausrement'
 	db 0x0A
 	db 'Test signal: P1.5 and Reference signal: P'
@@ -2056,7 +2814,7 @@ __str_1:
 	db 0x0A
 	db 0x0A
 	db 0x00
-__str_2:
+__str_8:
 	db 'C:'
 	db 0x5C
 	db 'Users'
@@ -2078,15 +2836,15 @@ __str_2:
 	db 0x5C
 	db 'Lab5.c'
 	db 0x00
-__str_3:
-	db 'Mar  3 2025'
+__str_9:
+	db 'Mar  4 2025'
 	db 0x00
-__str_4:
-	db '18:37:06'
+__str_10:
+	db '16:52:04'
 	db 0x00
-__str_5:
+__str_11:
 	db 'Vp_ref = %.3fV, Vp_sig = %.3fV, Phase Diff = %.3fdeg, f = %.'
-	db '3fHz'
+	db '3fHz, T = %.3fs'
 	db 0x0D
 	db 0x00
 
