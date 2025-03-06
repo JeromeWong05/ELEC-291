@@ -20,7 +20,9 @@
 #define Phasor_ref      P2_6
 #define Buttonleft      0x31
 #define Buttonright     0x25
-#define DebugLED        P0_1
+#define Buttonsave		0x37
+#define LED 			P0_1
+
 
 // Pins for the LCD
 #define LCD_RS          P1_7
@@ -37,6 +39,12 @@ xdata unsigned char overflow_count;
 xdata float vpeak[2];
 xdata float phase_diff; 
 xdata float frequency; 
+
+xdata float Saved_vref[5];
+xdata float Saved_vsig[5];
+xdata float Saved_phase[5];
+xdata float Saved_freq[5];
+xdata float Saved_units[5];
 
 char _c51_external_startup (void)
 {
@@ -144,7 +152,6 @@ void waitus(unsigned int us) {
         Timer3us((unsigned char)temp);
     }
 }
-
 
 void TIMER0_Init(void)
 {
@@ -261,6 +268,32 @@ bit ReadButtonDebounced(unsigned char pin)
     return 0; 
 }
 
+bit ReadButtonLongPress(unsigned char pin)
+{
+	unsigned int elapsed = 0;
+    // Check if the button is initially pressed
+    if (Read_Pin(pin) == 0) 
+    {
+        // Debounce: wait briefly and confirm it's still pressed
+        waitms(20);
+        if (Read_Pin(pin) == 1)
+            return 0; // false if released
+        
+        // Button is pressed
+        while (Read_Pin(pin) == 0) // while still pressed
+        {
+            waitms(20);
+            elapsed += 10;
+            if (elapsed >= 500){
+                return 1; // long press detected
+			}
+				
+        }
+    }
+    return 0; // not a long press
+	
+}
+
 void Set_Pin_Input (unsigned char pin)
 {
 	xdata unsigned char mask;
@@ -273,6 +306,49 @@ void Set_Pin_Input (unsigned char pin)
 		case 1: P1MDOUT &= mask; break;
 		case 2: P2MDOUT &= mask; break; 
 		case 3: P3MDOUT &= mask; break; 
+	}	
+}
+
+void Set_Pin_Output (unsigned char pin)
+{
+	unsigned char mask;
+	
+	mask=(1<<(pin&0x7));
+	switch(pin/0x10)
+	{
+		case 0: P0MDOUT |= mask; break;
+		case 1: P1MDOUT |= mask; break;
+		case 2: P2MDOUT |= mask; break; 
+		case 3: P3MDOUT |= mask; break; 
+	}	
+}
+
+void Set_Pin_One (unsigned char pin)
+{
+	unsigned char mask;
+	
+	mask=(1<<(pin&0x7));
+	switch(pin/0x10)
+	{
+		case 0: P0 |= mask; break;
+		case 1: P1 |= mask; break;
+		case 2: P2 |= mask; break; 
+		case 3: P3 |= mask; break; 
+	}	
+}
+
+void Set_Pin_Zero (unsigned char pin)
+{
+	unsigned char mask;
+	
+	mask=(1<<(pin&0x7));
+	mask=~mask;
+	switch(pin/0x10)
+	{
+		case 0: P0 &= mask; break;
+		case 1: P1 &= mask; break;
+		case 2: P2 &= mask; break; 
+		case 3: P3 &= mask; break; 
 	}	
 }
 
@@ -358,9 +434,13 @@ float Volts_at_Pin(unsigned char pin)
 	 return ((ADC_at_Pin(pin)*VDD)/0b_0011_1111_1111_1111);
 }
 
-float ReadPeriod(void)
+void ReadPeriod(float *period_arr)
 {
+	xdata float error; 
     float period; 
+	float period_sig; 
+
+	// Measure reference period
     overflow_count = 0; 
     // Timer0 was configured before already - need clear TH0, TL0
     TR0 = 0; // make sure timer0 is stopped
@@ -387,9 +467,49 @@ float ReadPeriod(void)
 		}
 	}
 	TR0=0;
-
     period=(overflow_count * 65536.0 + TH0 * 256.0 + TL0) * (12.0 / SYSCLK);
-    return period; 
+
+    // Timer0 was configured before already - need clear TH0, TL0
+	overflow_count = 0; 
+    TH0 = 0; TL0 = 0; TF0 = 0;
+	while(Phasor_sig == 1); // wait for the signal to be zero
+    while(Phasor_sig == 0); // wait for the signal to be one
+    TR0 = 1; // start timing 
+    while(Phasor_sig == 1) // Wait for the signal to be zero
+	{
+		if(TF0==1) // Did the 16-bit timer overflow?
+		{
+			TF0=0;
+			overflow_count++;
+		}
+	}
+	while(Phasor_sig == 0) // Wait for the signal to be one
+	{
+		if(TF0==1) // Did the 16-bit timer overflow?
+		{
+			TF0=0;
+			overflow_count++;
+		}
+	}
+	TR0=0;
+    period_sig=(overflow_count * 65536.0 + TH0 * 256.0 + TL0) * (12.0 / SYSCLK);
+
+	error = fabsf(period_sig - period) * 100.0 / period; 
+
+	if (error > 15.0){
+		Set_Pin_One(0x01);
+		waitms(100);
+		Set_Pin_Zero(0x01);
+		waitms(100);
+		Set_Pin_One(0x01);
+		waitms(100);
+		Set_Pin_Zero(0x01);
+		waitms(100);
+	}
+	// printf("Sig: %.4f, Ref: %.4f, Error: %.4f\r", period_sig, period, error); 
+    
+	period_arr[0] = period; 
+	period_arr[1] = period_sig;
 
 }
 
@@ -459,34 +579,95 @@ void DisplayMenu(int menu, int units)
         case 0:
             if (units) // display peak
             {
-                sprintf(buff, "Vr=%.1fV", vpeak[0]);
+                sprintf(buff, "P: S=%.2f R=%.2f", vpeak[1], vpeak[0]);
                 LCDprint(buff, 1, 0, 1);
-                sprintf(buff, "Vs=%.1fV", vpeak[1]);
-                LCDprint(buff, 2, 0, 1);
-                // LCDprint("peak", 1, 0, 1);
-                break; 
-
             }
             else // display rms 
             {
-                sprintf(buff, "%.1f",phase_diff);
-                LCDprint(buff, 2, 0, 1);
-                // sprintf(buff2, "f=%.1f", frequency/1000.0);
-                // LCDprint(buff2, 2, 0, 1);
-                // LCDprint("rms", 1, 0, 1);
-                break; 
+                sprintf(buff, "R: S=%.2f R=%.2f", vpeak[1]/sqrtf(2), vpeak[0]/sqrtf(2));
+                LCDprint(buff, 1, 0, 1);
             }
+			sprintf(buff, "p=%.1f f=%.2fkHz", phase_diff, frequency / 1000.0);
+			LCDprint(buff, 2, 0, 1);
+			break; 
         
         case 1: // main menu 
             LCDprint("Phasor", 1, 4, 1);
             LCDprint("<    Meter     >", 2, 0, 1);
             break;
         case 2: 
-            LCDprint("2", 1, 0, 1);
-            // sprintf(buff, "f=%.1f", frequency/1000.0);
-            // LCDprint(buff, 2, 0, 1);
+			LCDprint("1", 1, 0, 0);
+				if (Saved_units[0]){
+					LCDprint("P", 1, 1, 0);
+				}
+				else{
+					LCDprint("R", 1, 1, 0);
+				}
+				sprintf(buff, "S=%.2f R=%.2f", Saved_vsig[0], Saved_vref[0]);
+				LCDprint(buff, 1, 3, 1);
+				sprintf(buff, "p=%.1f f=%.2fkHz", Saved_phase[0], Saved_freq[0] / 1000.0);
+				LCDprint(buff, 2, 0, 1); 
+			break; 	
+		case 3: 
+			LCDprint("2", 1, 0, 0);
+			//if (Saved_vsig[1] != NULL){
+				if (Saved_units[1]){
+					LCDprint("P", 1, 1, 0);
+				}
+				else{
+					LCDprint("R", 1, 1, 0);
+				}
+				sprintf(buff, "S=%.2f R=%.2f", Saved_vsig[1], Saved_vref[1]);
+				LCDprint(buff, 1, 3, 1);
+				sprintf(buff, "p=%.1f f=%.2fkHz", Saved_phase[1], Saved_freq[1] / 1000.0);
+				LCDprint(buff, 2, 0, 1); 
+			//}
             break; 
-
+		case 4: 
+			LCDprint("3", 1, 0, 0);
+			//if (Saved_vsig[2] != NULL){
+				if (Saved_units[2]){
+					LCDprint("P", 1, 1, 0);
+				}
+				else{
+					LCDprint("R", 1, 1, 0);
+				}
+				sprintf(buff, "S=%.2f R=%.2f", Saved_vsig[2], Saved_vref[2]);
+				LCDprint(buff, 1, 3, 1);
+				sprintf(buff, "p=%.1f f=%.2fkHz", Saved_phase[2], Saved_freq[2] / 1000.0);
+				LCDprint(buff, 2, 0, 1); 
+			//}
+			break; 
+		case 5: 
+			LCDprint("4", 1, 0, 0);
+			//if (Saved_vsig[3] != NULL){
+				if (Saved_units[3]){
+					LCDprint("P", 1, 1, 0);
+				}
+				else{
+					LCDprint("R", 1, 1, 0);
+				}
+				sprintf(buff, "S=%.2f R=%.2f", Saved_vsig[3], Saved_vref[3]);
+				LCDprint(buff, 1, 3, 1);
+				sprintf(buff, "p=%.1f f=%.2fkHz", Saved_phase[3], Saved_freq[3] / 1000.0);
+				LCDprint(buff, 2, 0, 1); 
+			//}
+			break; 
+		case 6:
+			LCDprint("5", 1, 0, 0);
+			//if (Saved_vsig[4] != NULL){
+				if (Saved_units[4]){
+					LCDprint("P", 1, 1, 0);
+				}
+				else{
+					LCDprint("R", 1, 1, 0);
+				}
+				sprintf(buff, "S=%.2f R=%.2f", Saved_vsig[4], Saved_vref[4]);
+				LCDprint(buff, 1, 3, 1);
+				sprintf(buff, "p=%.1f f=%.2fkHz", Saved_phase[4], Saved_freq[4] / 1000.0);
+				LCDprint(buff, 2, 0, 1); 
+			//}
+            break; 
     }
 }
 
@@ -497,9 +678,11 @@ void main (void)
     xdata int units = 0; 
 
     xdata float period; 
+	xdata float period_arr[2];
     xdata float time_diff; 
 
     xdata int menu = 1; 
+	xdata int mem = 0; 
     
     TIMER0_Init();
 	LCD_4BIT(); 
@@ -510,6 +693,8 @@ void main (void)
     InitADC();
     Set_Pin_Input(0x31);
     Set_Pin_Input(0X25);
+	Set_Pin_Input(0x37);
+	Set_Pin_Output(0x01);
     waitms(500); // Give PuTTy a chance to start before sending
 	printf("\x1b[2J"); // Clear screen using ANSI escape sequence.
 
@@ -520,7 +705,11 @@ void main (void)
 	        __FILE__, __DATE__, __TIME__);
 	while(1)
 	{
-        period = ReadPeriod();
+		int i; 
+		Set_Pin_Zero(0x01);
+        ReadPeriod(period_arr);
+		period = period_arr[0];
+		
         //printf("Period: %.9f\r", period);
         ReadPeak(period, vpeak);
         time_diff = ReadDiff();
@@ -535,23 +724,61 @@ void main (void)
         frequency = 1.0/ period;
 
         if (ReadButtonDebounced(Buttonleft)){
-            if (menu == 1) menu = 0; 
+			if (menu == 0) units = ~units; 
+            else if (menu == 1) menu = 0; 
             else if (menu == 2) menu = 1; 
-            else if (menu == 0) units = ~units; 
+			else if (menu == 3) menu = 2; 
+			else if (menu == 4) menu = 3; 
+			else if (menu == 5) menu = 4; 
+			else if (menu == 6) menu = 5; 
             WriteCommand(0x01);
             waitms(5);
         }
         
-        else if (ReadButtonDebounced(Buttonright)){
+        if (ReadButtonDebounced(Buttonright)){
             if (menu == 0) menu = 1; 
             else if (menu == 1) menu = 2; 
+			else if (menu == 2) menu = 3; 
+			else if (menu == 3) menu = 4; 
+			else if (menu == 4) menu = 5;
+			else if (menu == 5) menu = 6; 
             WriteCommand(0x01);
             waitms(5);
         }
+		if (ReadButtonDebounced(Buttonsave)){
+			if (menu == 0){
+				if (units){
+					Saved_vref[mem] = vpeak[0];
+					Saved_vsig[mem] = vpeak[1];
+				}
+				else {
+					Saved_vref[mem] = vpeak[0]/sqrtf(2);
+					Saved_vsig[mem] = vpeak[1]/sqrtf(2);
+				}
+				Saved_phase[mem] = phase_diff;
+				Saved_freq[mem] = frequency; 
+				Saved_units[mem] = units; 
+				mem++; 
+			}
+			else if ((menu == 2) || (menu == 3) || (menu == 4) || (menu == 5) || (menu == 6)){
+				Set_Pin_One(0x01);
+				for (i = 0; i < 5; i++){
+					Saved_vref[i] = 0.0; 
+					Saved_vsig[i] = 0.0; 
+					Saved_phase[i] = 0.0; 
+					Saved_freq[i] = 0.0; 
+					Saved_units[i] = 0.0; 
+				}
+				mem = 0;
+				WriteCommand(0x01);
+				waitms(5);
+			}
+		}
+
         DisplayMenu(menu, units);
 
-        printf("Vp_ref = %.3fV, Vp_sig = %.3fV, Phase Diff = %.3fdeg, f = %.3fHz, T = %.3fs\r", vpeak[0], vpeak[1], phase_diff, frequency, period);        
-        waitms(500);
+		printf("%f,%f,%f,%f,%f\r\n", period, period_arr[1], vpeak[0], vpeak[1], phase_diff);
+        waitms(100);
         
 	}  
 }	
